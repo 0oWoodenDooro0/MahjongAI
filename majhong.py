@@ -27,21 +27,29 @@ def check_is_win(tiles: list[Tile], discard_tile: Tile):
 
     則「P胡」若且唯若「Q胡」。
     """
-    pairs : list = [i for i,_ in Counter(tiles).items() if _==2]
+    
+    copyed_tiles = tiles.copy()
+    copyed_tiles.append(discard_tile)
+
+    pairs : list = [i for i,_ in Counter(copyed_tiles).items() if _==2]
     for pair in pairs:
-        if _iswin([i for i in tiles if i != pair]):
+        if _iswin([i for i in copyed_tiles if i != pair]):
             return True
     return False
 
 def _iswin(tiles: list[Tile]) -> bool:
     if tiles is None:
         return True
-    min_tiles = min(tiles)
-    if tiles.count(min_tiles) >= 3:
-        return _iswin([i for i in tiles if i != min_tiles])
-    if (min_tiles+1 not in tiles) or (min_tiles+2 not in tiles):
+    min_tile = min(tiles)
+    if tiles.count(min_tile) >= 3:
+        return _iswin([i for i in tiles if i != min_tile])
+    if (min_tile+1 not in tiles) or (min_tile+2 not in tiles):
         return False
-    return _iswin([i for i in tiles if i not in [min_tiles, min_tiles+1, min_tiles+2]])
+    Q = tiles.copy()
+    Q.remove(min_tile)
+    Q.remove(min_tile+1)
+    Q.remove(min_tile+2)
+    return _iswin(Q)
 
 
-#check_is_win([Tile.C1,Tile.C1,Tile.C2,Tile.C3,Tile.C4,Tile.C4,Tile.C4],Tile.C5)
+#check_is_win([Tile.C1,Tile.C1,Tile.C2,Tile.C3,Tile.C4,Tile.C4,Tile.C4],Tile.C5))
