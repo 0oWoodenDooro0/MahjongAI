@@ -9,4 +9,4 @@ class TestGame(TestCase):
         game.deal()
         for player in game.players:
             self.assertEqual(len(player.hand), 16)
-        self.assertEqual(len(game.board.stack), 72)
+        self.assertEqual(len(game.board.wall), 72)
