@@ -1,5 +1,5 @@
 from tile import Tile
-from collections import Counter,defaultdict
+from collections import Counter
 
 
 def check_is_pong(tiles: list[Tile], discard_tile: Tile) -> bool:
@@ -45,11 +45,11 @@ def _iswin(tiles: list[Tile]) -> bool:
         return _iswin([i for i in tiles if i != min_tile])
     if (min_tile+1 not in tiles) or (min_tile+2 not in tiles):
         return False
-    Q = tiles.copy()
-    Q.remove(min_tile)
-    Q.remove(min_tile+1)
-    Q.remove(min_tile+2)
-    return _iswin(Q)
+    copyed_tiles = tiles.copy()
+    copyed_tiles.remove(min_tile)
+    copyed_tiles.remove(min_tile+1)
+    copyed_tiles.remove(min_tile+2)
+    return _iswin(copyed_tiles)
 
 
 #check_is_win([Tile.C1,Tile.C1,Tile.C2,Tile.C3,Tile.C4,Tile.C4,Tile.C4],Tile.C5))
