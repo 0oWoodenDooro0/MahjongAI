@@ -3,11 +3,11 @@ from collections import Counter
 
 
 def check_is_pong(tiles: list[Tile], discard_tile: Tile) -> bool:
-    return tiles.count(discard_tile) >= 3
+    return tiles.count(discard_tile) >= 2
 
 
 def check_is_kong(tiles: list[Tile], discard_tile: Tile) -> bool:
-    return tiles.count(discard_tile) >= 4
+    return tiles.count(discard_tile) >= 3
 
 
 def check_is_chow(tiles: list[Tile], discard_tile: Tile) -> bool:
