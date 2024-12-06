@@ -1,5 +1,5 @@
 from tile import Tile
-from collections import Counter,defaultdict
+from collections import Counter
 
 
 def check_is_pong(tiles: list[Tile], discard_tile: Tile) -> bool:
