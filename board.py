@@ -7,7 +7,7 @@ from tile import Tile
 class Board:
     def __init__(self):
         self.stack: list[Tile] = []
-        for i in range(1, 35):
+        for i in (tile.value for tile in Tile):
             self.stack.extend((Tile(i), Tile(i), Tile(i), Tile(i)))
         random.shuffle(self.stack)
 
