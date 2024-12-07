@@ -4,7 +4,7 @@ from tile import Tile
 
 
 class TestMajhong(TestCase):
-    def test_deal(self):
+    def test_check_is_chow(self):
         tile_chow_list1 = [Tile.C3, Tile.C2]
         tile_chow_list2 = [Tile.C3, Tile.C1]
         tile_chow_list3 = [Tile.C7, Tile.C8]
@@ -15,15 +15,16 @@ class TestMajhong(TestCase):
         self.assertTrue(check_is_chow(tile_chow_list3, Tile.C9))
         self.assertTrue(check_is_chow(tile_chow_list4, Tile.C8))
 
-        tile_kong_list = [Tile.D3, Tile.D3, Tile.D3]
-        tile_pong_list = [Tile.D3, Tile.D3]
-        self.assertFalse(check_is_kong(tile_pong_list, Tile.D3))
-        self.assertTrue(check_is_kong(tile_kong_list, Tile.D3))
+    def test_check_is_kong(self):
+        self.assertTrue(check_is_kong([Tile.D3, Tile.D3, Tile.D3], Tile.D3))
+        self.assertFalse(check_is_kong([Tile.D3, Tile.D2, Tile.D3], Tile.D3))
 
-        self.assertTrue(check_is_pong(tile_pong_list, Tile.D3))
-        self.assertTrue(check_is_pong(tile_kong_list, Tile.D3))
+    def test_check_is_pong(self):
+        self.assertTrue(check_is_pong([Tile.D3, Tile.D3], Tile.D3))
+        self.assertTrue(check_is_pong([Tile.D3, Tile.D3, Tile.D3], Tile.D3))
         self.assertFalse(check_is_pong([Tile.D3, Tile.D2], Tile.D3))
 
+    def test_check_is_win(self):
         tile_win_list1 = [Tile.D3, Tile.D3, Tile.C7, Tile.C7]
         tile_win_list2 = [
             Tile.D3,
