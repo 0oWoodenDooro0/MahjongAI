@@ -40,11 +40,11 @@ def check_is_win(tiles: list[Tile], discard_tile: Tile):
             return _iswin([i for i in tiles if i != min_tile])
         if (min_tile + 1 not in tiles) or (min_tile + 2 not in tiles):
             return False
-        copied_tiles = tiles.copy()
-        copied_tiles.remove(min_tile)
-        copied_tiles.remove(min_tile + 1)
-        copied_tiles.remove(min_tile + 2)
-        return _iswin(copied_tiles)
+        sub_tiles = tiles.copy()
+        sub_tiles.remove(min_tile)
+        sub_tiles.remove(min_tile + 1)
+        sub_tiles.remove(min_tile + 2)
+        return _iswin(sub_tiles)
 
     """#定理01：
 
@@ -59,8 +59,11 @@ def check_is_win(tiles: list[Tile], discard_tile: Tile):
     copied_tiles = tiles.copy()
     copied_tiles.append(discard_tile)
 
-    pairs: list = [i for i, _ in Counter(copied_tiles).items() if _ == 2]
+    pairs: list = [i for i, c in Counter(copied_tiles).items() if c >= 2]
     for pair in pairs:
-        if _iswin([i for i in copied_tiles if i != pair]):
+        sub_tiles = copied_tiles.copy()
+        sub_tiles.remove(pair)
+        sub_tiles.remove(pair)
+        if _iswin(sub_tiles):
             return True
     return False
