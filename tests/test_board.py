@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from majhong import Board, Player
+from mahjong import Board, Player
 
 
 class TestBoard(TestCase):
