@@ -3,7 +3,7 @@ from unittest import TestCase
 from mahjong import Tile, check_is_chow, check_is_kong, check_is_pong, check_is_win
 
 
-class TestMajhong(TestCase):
+class TestMahjong(TestCase):
     def test_check_is_chow(self):
         tile_chow_list1 = [Tile.C3, Tile.C2]
         tile_chow_list2 = [Tile.C3, Tile.C1]
