@@ -1,6 +1,6 @@
 from unittest import TestCase
-from majhong import check_is_chow, check_is_kong, check_is_pong, check_is_win
-from tile import Tile
+
+from majhong import Tile, check_is_chow, check_is_kong, check_is_pong, check_is_win
 
 
 class TestMajhong(TestCase):

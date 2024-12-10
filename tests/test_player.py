@@ -1,7 +1,6 @@
 from unittest import TestCase
 
-from player import Player
-from tile import Tile
+from majhong import Player, Tile
 
 
 class TestPlayer(TestCase):
