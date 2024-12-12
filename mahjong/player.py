@@ -10,16 +10,16 @@ class Player:
         self.hand.append(tile)
 
     def discard(self, tile: Tile):
-        pass
+        self.hand.remove(tile)
 
     def chou(self, tile: Tile):
-        pass
+        self.hand.remove(tile)
+        self.decalaration.append(tile)
 
     def pong(self, tile: Tile):
-        pass
+        self.hand.remove(tile)
+        self.decalaration.append(tile)
 
     def kong(self, tile: Tile):
-        pass
-
-    def claim_to_declaration(self):
-        pass
+        self.hand.remove(tile)
+        self.decalaration.append(tile)

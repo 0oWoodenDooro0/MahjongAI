@@ -1,6 +1,6 @@
 from board import Board
 from player import Player
-
+from tile import Tile
 
 class Game:
     def __init__(self):
@@ -12,14 +12,15 @@ class Game:
             for player in self.players:
                 self.board.deal(player)
 
-    def discard(self, player: Player):
-        pass
+    def discard(self, player: Player, tile: Tile):
+        player.discard(tile)
+        self.board.discard_to_river(tile)
 
-    def chou(self, player: Player):
-        pass
+    def chou(self, player: Player, tile: Tile):
+        player.chou(tile)
 
-    def pong(self, player: Player):
-        pass
+    def pong(self, player: Player, tile: Tile):
+        player.pong(tile)
 
-    def kong(self, player: Player):
-        pass
+    def kong(self, player: Player, tile: Tile):
+        player.kong(tile)
