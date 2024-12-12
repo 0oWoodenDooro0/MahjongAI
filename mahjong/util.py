@@ -78,11 +78,11 @@ def check_is_win(tiles: list[Tile], discard_tile: Tile):
 
 
 def check_listen(hand_tiles: list[Tile]) -> int:
-    def _count_combos_and_partners(tiles: list[Tile]) -> list[int, int]:
+    def _count_combos_and_partners(tiles: list[Tile]) -> list[int]:
         if len(tiles) == 0:
             return [0, 0]
 
-        result: list[int, int] = [0, 0]  # return (面子，搭子)
+        result: list[int]  # return (面子，搭子)
         min_tile = min(tiles)
         sub_tiles = tiles.copy()
 
@@ -116,14 +116,13 @@ def check_listen(hand_tiles: list[Tile]) -> int:
     # ---------------------------------------------------------
     # reference from https://www.bilibili.com/opus/563332111030452322
 
-    combos: int = 0
-    partners: int = 0
     copied_tiles = hand_tiles.copy()
     pairs: list = [i for i, c in Counter(copied_tiles).items() if c >= 2]
     has_pair: bool = len(pairs) > 0
 
-    result: list[int, int] = _count_combos_and_partners(hand_tiles)
-    combos, partners = result[0], result[1]
+    result: list[int] = _count_combos_and_partners(hand_tiles)
+    combos: int = result[0]
+    partners: int = result[1]
 
     if combos + partners <= 6:
         return 10 - 2 * combos - partners
