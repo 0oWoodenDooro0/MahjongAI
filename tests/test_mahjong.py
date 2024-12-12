@@ -1,6 +1,12 @@
 from unittest import TestCase
-
-from mahjong import Tile, check_is_chow, check_is_kong, check_is_pong, check_is_win
+from mahjong import Tile
+from mahjong import (
+    check_is_chow,
+    check_is_kong,
+    check_is_pong,
+    check_is_win,
+    check_listen,
+)
 
 
 class TestMahjong(TestCase):
@@ -58,3 +64,62 @@ class TestMahjong(TestCase):
 
         self.assertTrue(check_is_win(tile_win_list3, Tile.D2))
         self.assertFalse(check_is_win(tile_win_list3, Tile.W1))
+
+    def test_check_listen(self):
+        tile1 = [
+            Tile.C2,
+            Tile.C2,
+            Tile.C3,
+            Tile.C6,
+            Tile.C7,
+            Tile.B1,
+            Tile.B3,
+            Tile.B8,
+            Tile.B9,
+            Tile.D3,
+            Tile.D7,
+            Tile.D8,
+            Tile.W2,
+            Tile.Dragon1,
+            Tile.Dragon1,
+            Tile.Dragon1,
+        ]
+        tile2 = [
+            Tile.C1,
+            Tile.C2,
+            Tile.C3,
+            Tile.C5,
+            Tile.C6,
+            Tile.C8,
+            Tile.C9,
+            Tile.B2,
+            Tile.B3,
+            Tile.B5,
+            Tile.B6,
+            Tile.B8,
+            Tile.B9,
+            Tile.D1,
+            Tile.D2,
+            Tile.D3,
+        ]
+        tile3 = [
+            Tile.C1,
+            Tile.C2,
+            Tile.C3,
+            Tile.C5,
+            Tile.C6,
+            Tile.C8,
+            Tile.C9,
+            Tile.B2,
+            Tile.B3,
+            Tile.B5,
+            Tile.B6,
+            Tile.B9,
+            Tile.B9,
+            Tile.D1,
+            Tile.D2,
+            Tile.D3,
+        ]
+        self.assertEqual(check_listen(tile1), 3)
+        self.assertEqual(check_listen(tile2), 3)
+        self.assertEqual(check_listen(tile3), 2)
