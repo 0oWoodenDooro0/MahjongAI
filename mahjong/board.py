@@ -1,7 +1,7 @@
 import random
 
-from player import Player
-from tile import Tile
+from .player import Player
+from .tile import Tile
 
 
 class Board:
@@ -9,7 +9,7 @@ class Board:
         self.river: list[Tile] = []
         self.wall: list[Tile] = []
         for tile in Tile:
-            if tile in [Tile.Spring, Tile.Summer, Tile.Autumn, Tile.Winter, 
+            if tile in [Tile.Spring, Tile.Summer, Tile.Autumn, Tile.Winter,
                         Tile.Plum, Tile.Orchid, Tile.Bamboo, Tile.Chrysanth]:
                 self.wall.append(tile)
             else:

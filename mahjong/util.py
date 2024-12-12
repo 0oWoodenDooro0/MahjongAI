@@ -1,5 +1,6 @@
-from tile import Tile
 from collections import Counter
+
+from .tile import Tile
 
 
 def check_is_pong(tiles: list[Tile], discard_tile: Tile) -> bool:
@@ -12,20 +13,20 @@ def check_is_kong(tiles: list[Tile], discard_tile: Tile) -> bool:
 
 def check_is_chow(tiles: list[Tile], discard_tile: Tile) -> bool:
     first: bool = (
-        (discard_tile % 10 <= 7)
-        and (discard_tile + 1 in tiles)
-        and (discard_tile + 2 in tiles)
+            (discard_tile % 10 <= 7)
+            and (discard_tile + 1 in tiles)
+            and (discard_tile + 2 in tiles)
     )
     middle: bool = (
-        (discard_tile % 10 <= 8)
-        and (discard_tile % 10 >= 2)
-        and (discard_tile + 1 in tiles)
-        and (discard_tile - 1 in tiles)
+            (discard_tile % 10 <= 8)
+            and (discard_tile % 10 >= 2)
+            and (discard_tile + 1 in tiles)
+            and (discard_tile - 1 in tiles)
     )
     last: bool = (
-        (discard_tile % 10 >= 3)
-        and (discard_tile - 1 in tiles)
-        and (discard_tile - 2 in tiles)
+            (discard_tile % 10 >= 3)
+            and (discard_tile - 1 in tiles)
+            and (discard_tile - 2 in tiles)
     )
 
     return first or middle or last
