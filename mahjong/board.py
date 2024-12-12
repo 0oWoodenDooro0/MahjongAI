@@ -1,7 +1,7 @@
 import random
 
-from player import Player
-from tile import Tile
+from .player import Player
+from .tile import Tile
 
 
 class Board:
