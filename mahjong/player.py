@@ -9,17 +9,8 @@ class Player:
     def draw(self, tile: Tile):
         self.hand.append(tile)
 
-    def discard(self, tile: list[Tile]):
+    def discard(self, tile: Tile):
         self.hand.remove(tile)
 
-    def chou(self, tile: list[Tile]):
-        self.hand.remove(tile)
-        self.decalaration.append(tile)
-
-    def pong(self, tile: list[Tile]):
-        self.hand.remove(tile)
-        self.decalaration.append(tile)
-
-    def kong(self, tile: list[Tile]):
-        self.hand.remove(tile)
+    def add_to_decalaration(self, tile: Tile):
         self.decalaration.append(tile)
