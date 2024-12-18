@@ -1,6 +1,5 @@
 import random
 
-from .player import Player
 from .tile import Tile
 
 
@@ -16,9 +15,8 @@ class Board:
                 self.wall.extend((tile, tile, tile, tile))
         random.shuffle(self.wall)
 
-    def deal(self, player: Player):
-        tile = self.wall.pop()
-        player.draw(tile)
+    def draw(self) -> Tile:
+        return self.wall.pop()
 
     def discard_to_river(self, tile: Tile):
         self.river.append(tile)
