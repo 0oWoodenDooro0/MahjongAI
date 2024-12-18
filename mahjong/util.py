@@ -2,13 +2,13 @@ from collections import Counter
 
 from .tile import Tile
 
-
 def check_is_pong(tiles: list[Tile], discard_tile: Tile) -> bool:
-    return tiles.count(discard_tile) >= 2
-
+    if tiles.count(discard_tile) >= 2: return [discard_tile, discard_tile, discard_tile]
+    return None
 
 def check_is_kong(tiles: list[Tile], discard_tile: Tile) -> bool:
-    return tiles.count(discard_tile) >= 3
+    if tiles.count(discard_tile) >= 3: return [discard_tile, discard_tile, discard_tile, discard_tile]
+    return None
 
 
 def check_is_chow(tiles: list[Tile], discard_tile: Tile) -> bool:
@@ -29,7 +29,11 @@ def check_is_chow(tiles: list[Tile], discard_tile: Tile) -> bool:
             and (discard_tile - 2 in tiles)
     )
 
-    return first or middle or last
+    if first: return [discard_tile, discard_tile + 1, discard_tile + 2]
+    elif middle: return [discard_tile - 1, discard_tile, discard_tile + 1]
+    else: return [discard_tile - 2, discard_tile - 1, discard_tile]
+        
+    return None
 
 
 def check_is_win(tiles: list[Tile], discard_tile: Tile):

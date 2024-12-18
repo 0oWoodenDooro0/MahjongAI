@@ -1,6 +1,5 @@
 from enum import IntEnum
 
-
 class Tile(IntEnum):
     C1 = 1  # 萬 1-9
     C2 = 2
@@ -11,6 +10,7 @@ class Tile(IntEnum):
     C7 = 7
     C8 = 8
     C9 = 9
+
     D1 = 11  # 筒 1-9
     D2 = 12
     D3 = 13
@@ -20,6 +20,7 @@ class Tile(IntEnum):
     D7 = 17
     D8 = 18
     D9 = 19
+
     B1 = 21  # 條 1-9
     B2 = 22
     B3 = 23
@@ -29,18 +30,22 @@ class Tile(IntEnum):
     B7 = 27
     B8 = 28
     B9 = 29
+
     W1 = 100  # 風 東南西北
     W2 = 110
     W3 = 120
     W4 = 130
+
     Dragon1 = 200  # 箭 中發白
     Dragon2 = 210
     Dragon3 = 220
+
     Spring = 310  # 春夏秋冬
     Summer = 320
     Autumn = 330
     Winter = 340
-    Plum = 410  # 梅蘭竹菊
+
+    Plum = 410    # 梅蘭竹菊
     Orchid = 420
     Bamboo = 430
     Chrysanth = 440

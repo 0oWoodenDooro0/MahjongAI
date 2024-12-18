@@ -1,6 +1,5 @@
 from .tile import Tile
 
-
 class Player:
     def __init__(self):
         self.hand: list[Tile] = []

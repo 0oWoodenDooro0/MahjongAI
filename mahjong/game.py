@@ -2,7 +2,6 @@ from .board import Board
 from .player import Player
 from .tile import Tile
 
-
 class Game:
     def __init__(self):
         self.board = Board()

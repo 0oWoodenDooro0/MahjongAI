@@ -3,7 +3,6 @@ import random
 from .player import Player
 from .tile import Tile
 
-
 class Board:
     def __init__(self):
         self.river: list[Tile] = []
