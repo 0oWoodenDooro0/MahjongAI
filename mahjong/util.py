@@ -1,17 +1,22 @@
 from collections import Counter
+from typing import Optional
 
 from .tile import Tile
 
 
-def check_is_pong(tiles: list[Tile], discard_tile: Tile) -> bool:
-    return tiles.count(discard_tile) >= 2
+def check_is_pong(tiles: list[Tile], discard_tile: Tile) -> Optional[tuple[Tile, Tile, Tile]]:
+    if tiles.count(discard_tile) >= 2:
+        return discard_tile, discard_tile, discard_tile
+    return None
 
 
-def check_is_kong(tiles: list[Tile], discard_tile: Tile) -> bool:
-    return tiles.count(discard_tile) >= 3
+def check_is_kong(tiles: list[Tile], discard_tile: Tile) -> Optional[tuple[Tile, Tile, Tile, Tile]]:
+    if tiles.count(discard_tile) >= 3:
+        return discard_tile, discard_tile, discard_tile, discard_tile
+    return None
 
 
-def check_is_chow(tiles: list[Tile], discard_tile: Tile) -> bool:
+def check_is_chow(tiles: list[Tile], discard_tile: Tile) -> Optional[list[tuple[Tile, Tile]]]:
     first: bool = (
             (discard_tile % 10 <= 7)
             and (discard_tile + 1 in tiles)
@@ -28,11 +33,20 @@ def check_is_chow(tiles: list[Tile], discard_tile: Tile) -> bool:
             and (discard_tile - 1 in tiles)
             and (discard_tile - 2 in tiles)
     )
+    possibles = []
+    if not any((first, middle, last)):
+        return None
+    if last:
+        possibles.append((discard_tile - 2, discard_tile - 1, discard_tile))
+    if middle:
+        possibles.append((discard_tile - 1, discard_tile, discard_tile + 1))
+    if first:
+        possibles.append((discard_tile, discard_tile + 1, discard_tile + 2))
 
-    return first or middle or last
+    return possibles
 
 
-def check_is_win(tiles: list[Tile], discard_tile: Tile):
+def check_is_win(tiles: list[Tile], discard_tile: Tile) -> bool:
     def _iswin(tiles: list[Tile]) -> bool:
         if len(tiles) == 0:
             return True
