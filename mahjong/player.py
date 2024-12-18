@@ -6,7 +6,7 @@ class Player:
         self.hand: list[Tile] = []
         self.decalaration: list[Tile] = []
 
-    def draw(self, tile: Tile):
+    def add_to_hand(self, tile: Tile):
         self.hand.append(tile)
 
     def discard(self, tile: Tile):
