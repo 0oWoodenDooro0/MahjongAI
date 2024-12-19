@@ -16,6 +16,20 @@ def check_is_kong(tiles: list[Tile], discard_tile: Tile) -> Optional[tuple[Tile,
     return None
 
 
+def check_is_closed_kong(tiles: list[Tile], draw_tile: Tile) -> Optional[tuple[Tile, Tile, Tile, Tile]]:
+    if tiles.count(draw_tile) >= 3:
+        return draw_tile, draw_tile, draw_tile, draw_tile
+    return None
+
+
+def check_is_add_kong(decalaration: list[tuple[Tile, Tile, Tile] | tuple[Tile, Tile, Tile, Tile]], draw_tile: Tile) -> \
+        Optional[Tile]:
+    for tiles in decalaration:
+        if tiles.count(draw_tile) == 3:
+            return draw_tile
+    return None
+
+
 def check_is_chow(tiles: list[Tile], discard_tile: Tile) -> Optional[list[tuple[Tile, Tile]]]:
     first: bool = (
             (discard_tile % 10 <= 7)
@@ -37,11 +51,11 @@ def check_is_chow(tiles: list[Tile], discard_tile: Tile) -> Optional[list[tuple[
     if not any((first, middle, last)):
         return None
     if last:
-        possibles.append((discard_tile - 2, discard_tile - 1, discard_tile))
+        possibles.append((Tile(discard_tile - 2), Tile(discard_tile - 1), Tile(discard_tile)))
     if middle:
-        possibles.append((discard_tile - 1, discard_tile, discard_tile + 1))
+        possibles.append((Tile(discard_tile - 1), discard_tile, Tile(discard_tile + 1)))
     if first:
-        possibles.append((discard_tile, discard_tile + 1, discard_tile + 2))
+        possibles.append((discard_tile, Tile(discard_tile + 1), Tile(discard_tile + 2)))
 
     return possibles
 
