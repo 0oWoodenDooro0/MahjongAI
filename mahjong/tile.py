@@ -36,11 +36,9 @@ class Tile(IntEnum):
     Dragon1 = 200  # 箭 中發白
     Dragon2 = 210
     Dragon3 = 220
-    Spring = 310  # 春夏秋冬
-    Summer = 320
-    Autumn = 330
-    Winter = 340
-    Plum = 410  # 梅蘭竹菊
-    Orchid = 420
-    Bamboo = 430
-    Chrysanth = 440
+
+    def __str__(self):
+        return str(self.name)
+
+    def __repr__(self):
+        return str(self.name)

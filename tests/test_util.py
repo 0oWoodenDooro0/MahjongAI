@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from mahjong import Tile
+from mahjong import Tile, check_is_add_kong, check_is_closed_kong
 from mahjong import (
     check_is_chow,
     check_is_kong,
@@ -37,6 +37,16 @@ class TestMahjong(TestCase):
     def test_check_is_kong(self):
         self.assertEqual((Tile.D3, Tile.D3, Tile.D3, Tile.D3), check_is_kong([Tile.D3, Tile.D3, Tile.D3], Tile.D3))
         self.assertIsNone(check_is_kong([Tile.D3, Tile.D2, Tile.D3], Tile.D3))
+
+    def test_check_is_closed_kong(self):
+        self.assertEqual((Tile.D3, Tile.D3, Tile.D3, Tile.D3),
+                         check_is_closed_kong([Tile.D3, Tile.D3, Tile.D3], Tile.D3))
+        self.assertIsNone(check_is_closed_kong([Tile.D3, Tile.D2, Tile.D3], Tile.D3))
+
+    def test_check_is_add_kong(self):
+        self.assertEqual(Tile.D3,
+                         check_is_add_kong([(Tile.C1, Tile.C2, Tile.C3), (Tile.D3, Tile.D3, Tile.D3)], Tile.D3))
+        self.assertIsNone(check_is_add_kong([(Tile.C1, Tile.C2, Tile.C3)], Tile.D3))
 
     def test_check_is_pong(self):
         self.assertEqual((Tile.D3, Tile.D3, Tile.D3), check_is_pong([Tile.D3, Tile.D3], Tile.D3))
