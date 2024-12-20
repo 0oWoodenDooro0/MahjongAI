@@ -53,9 +53,9 @@ def check_is_chow(tiles: list[Tile], discard_tile: Tile) -> Optional[list[tuple[
     if last:
         possibles.append((Tile(discard_tile - 2), Tile(discard_tile - 1), Tile(discard_tile)))
     if middle:
-        possibles.append((Tile(discard_tile - 1), discard_tile, Tile(discard_tile + 1)))
+        possibles.append((Tile(discard_tile - 1), Tile(discard_tile), Tile(discard_tile + 1)))
     if first:
-        possibles.append((discard_tile, Tile(discard_tile + 1), Tile(discard_tile + 2)))
+        possibles.append((Tile(discard_tile), Tile(discard_tile + 1), Tile(discard_tile + 2)))
 
     return possibles
 
