@@ -30,20 +30,22 @@ def check_is_add_kong(decalaration: list[tuple[Tile, Tile, Tile] | tuple[Tile, T
     return None
 
 
-def check_is_chow(tiles: list[Tile], discard_tile: Tile) -> Optional[list[tuple[Tile, Tile]]]:
+def check_is_chow(tiles: list[Tile], discard_tile: Tile) -> Optional[list[tuple[Tile, Tile, Tile]]]:
+    if discard_tile >= Tile.Dragon1:
+        return None
     first: bool = (
-            (discard_tile % 10 <= 7)
+            (discard_tile % 9 < 7)
             and (discard_tile + 1 in tiles)
             and (discard_tile + 2 in tiles)
     )
     middle: bool = (
-            (discard_tile % 10 <= 8)
-            and (discard_tile % 10 >= 2)
+            (discard_tile % 9 < 8)
+            and (discard_tile % 9 > 0)
             and (discard_tile + 1 in tiles)
             and (discard_tile - 1 in tiles)
     )
     last: bool = (
-            (discard_tile % 10 >= 3)
+            (discard_tile % 9 > 1)
             and (discard_tile - 1 in tiles)
             and (discard_tile - 2 in tiles)
     )
@@ -74,6 +76,8 @@ def check_is_win(tiles: list[Tile], discard_tile: Tile) -> bool:
             return _iswin(sub_tiles)
 
         if (min_tile + 1 not in tiles) or (min_tile + 2 not in tiles):
+            return False
+        elif (min_tile % 9 + 1 != (min_tile + 1) % 9) or (min_tile % 9 + 2 != (min_tile + 2) % 9):
             return False
 
         sub_tiles = tiles.copy()
@@ -157,6 +161,3 @@ def check_listen(hand_tiles: list[Tile]) -> int:
         return 10 - 2 * combos - partners
     else:
         return 5 - combos - has_pair
-
-# if __name__ == "__main__":
-# pass
