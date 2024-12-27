@@ -31,7 +31,7 @@ def check_is_add_kong(decalaration: list[tuple[Tile, Tile, Tile] | tuple[Tile, T
 
 
 def check_is_chow(tiles: list[Tile], discard_tile: Tile) -> Optional[list[tuple[Tile, Tile, Tile]]]:
-    if discard_tile >= Tile.Dragon1:
+    if discard_tile >= Tile.W1:
         return None
     first: bool = (
             (discard_tile % 9 < 7)
@@ -75,7 +75,9 @@ def check_is_win(tiles: list[Tile], discard_tile: Tile) -> bool:
                 sub_tiles.remove(min_tile)
             return _iswin(sub_tiles)
 
-        if (min_tile + 1 not in tiles) or (min_tile + 2 not in tiles):
+        if min_tile >= Tile.W1:
+            return False
+        elif (min_tile + 1 not in tiles) or (min_tile + 2 not in tiles):
             return False
         elif (min_tile % 9 + 1 != (min_tile + 1) % 9) or (min_tile % 9 + 2 != (min_tile + 2) % 9):
             return False
