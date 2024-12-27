@@ -38,22 +38,36 @@ class TestMahjong(TestCase):
         self.assertIsNone(result7)
 
     def test_check_is_kong(self):
-        self.assertEqual((Tile.D3, Tile.D3, Tile.D3, Tile.D3), check_is_kong([Tile.D3, Tile.D3, Tile.D3], Tile.D3))
+        self.assertEqual(
+            (Tile.D3, Tile.D3, Tile.D3, Tile.D3),
+            check_is_kong([Tile.D3, Tile.D3, Tile.D3], Tile.D3),
+        )
         self.assertIsNone(check_is_kong([Tile.D3, Tile.D2, Tile.D3], Tile.D3))
 
     def test_check_is_closed_kong(self):
-        self.assertEqual((Tile.D3, Tile.D3, Tile.D3, Tile.D3),
-                         check_is_closed_kong([Tile.D3, Tile.D3, Tile.D3], Tile.D3))
+        self.assertEqual(
+            (Tile.D3, Tile.D3, Tile.D3, Tile.D3),
+            check_is_closed_kong([Tile.D3, Tile.D3, Tile.D3], Tile.D3),
+        )
         self.assertIsNone(check_is_closed_kong([Tile.D3, Tile.D2, Tile.D3], Tile.D3))
 
     def test_check_is_add_kong(self):
-        self.assertEqual(Tile.D3,
-                         check_is_add_kong([(Tile.C1, Tile.C2, Tile.C3), (Tile.D3, Tile.D3, Tile.D3)], Tile.D3))
+        self.assertEqual(
+            Tile.D3,
+            check_is_add_kong(
+                [(Tile.C1, Tile.C2, Tile.C3), (Tile.D3, Tile.D3, Tile.D3)], Tile.D3
+            ),
+        )
         self.assertIsNone(check_is_add_kong([(Tile.C1, Tile.C2, Tile.C3)], Tile.D3))
 
     def test_check_is_pong(self):
-        self.assertEqual((Tile.D3, Tile.D3, Tile.D3), check_is_pong([Tile.D3, Tile.D3], Tile.D3))
-        self.assertEqual((Tile.D3, Tile.D3, Tile.D3), check_is_pong([Tile.D3, Tile.D3, Tile.D3], Tile.D3))
+        self.assertEqual(
+            (Tile.D3, Tile.D3, Tile.D3), check_is_pong([Tile.D3, Tile.D3], Tile.D3)
+        )
+        self.assertEqual(
+            (Tile.D3, Tile.D3, Tile.D3),
+            check_is_pong([Tile.D3, Tile.D3, Tile.D3], Tile.D3),
+        )
         self.assertIsNone(check_is_pong([Tile.D3, Tile.D2], Tile.D3))
 
     def test_check_is_win(self):
@@ -68,7 +82,7 @@ class TestMahjong(TestCase):
             Tile.C8,
             Tile.B7,
             Tile.B7,
-            Tile.B7
+            Tile.B7,
         ]
         tile_win_list3 = [
             Tile.D1,
@@ -90,7 +104,7 @@ class TestMahjong(TestCase):
             Tile.C8,
             Tile.D9,
             Tile.B1,
-            Tile.B2
+            Tile.B2,
         ]
         tile_win_list5 = [
             Tile.D3,
@@ -102,7 +116,7 @@ class TestMahjong(TestCase):
             Tile.C8,
             Tile.W3,
             Tile.W4,
-            Tile.Dragon1
+            Tile.Dragon1,
         ]
         self.assertTrue(check_is_win(tile_win_list1, Tile.C7))
         self.assertFalse(check_is_win(tile_win_list1, Tile.W1))
@@ -182,7 +196,13 @@ class TestMahjong(TestCase):
             Tile.C8,
             Tile.D9,
             Tile.B1,
-            Tile.B2
+            Tile.B2,
+            # Tile.C1,
+            # Tile.C2,
+            # Tile.C3,
+            # Tile.B7,
+            # Tile.B8,
+            # Tile.B9
         ]
         self.assertEqual(check_listen(tile1), 3)
         self.assertEqual(check_listen(tile2), 3)
