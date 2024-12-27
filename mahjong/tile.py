@@ -42,3 +42,26 @@ class Tile(IntEnum):
 
     def __repr__(self):
         return str(self.name)
+
+    def get_tile_seq(self):
+        """
+        return 1~9 if tile is 萬,筒,條\n
+        else return 0
+        """
+        if self.value > 26:
+            return 0
+        return self.value % 9 + 1
+
+    def next_seq_tile(self, offset: int = 1):
+        """
+        回傳數字牌下個順序的牌\n
+        如果不是數字牌或著跨牌型則回傳-1
+
+        """
+        if offset <= 0:
+            raise ValueError(f"{offset} must be greater than 0.")
+        if self.value > 26:
+            return -1
+        if self.get_tile_seq() + offset > 9:
+            return -1
+        return Tile(self.value + offset)

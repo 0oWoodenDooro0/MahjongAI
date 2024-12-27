@@ -38,7 +38,10 @@ class TestMahjong(TestCase):
         self.assertIsNone(result7)
 
     def test_check_is_kong(self):
-        self.assertEqual((Tile.D3, Tile.D3, Tile.D3, Tile.D3), check_is_kong([Tile.D3, Tile.D3, Tile.D3], Tile.D3))
+        self.assertEqual(
+            (Tile.D3, Tile.D3, Tile.D3, Tile.D3),
+            check_is_kong([Tile.D3, Tile.D3, Tile.D3], Tile.D3),
+        )
         self.assertIsNone(check_is_kong([Tile.D3, Tile.D2, Tile.D3], Tile.D3))
 
     def test_check_is_closed_kong(self):
@@ -210,7 +213,6 @@ class TestMahjong(TestCase):
             Tile.C7,
             Tile.C8,
             Tile.C8,
-            Tile.C9,
             Tile.D9,
             Tile.B1,
             Tile.B2
@@ -218,4 +220,4 @@ class TestMahjong(TestCase):
         self.assertEqual(check_listen(tile1), 3)
         self.assertEqual(check_listen(tile2), 3)
         self.assertEqual(check_listen(tile3), 2)
-        self.assertEqual(check_listen(tile4), 1)
+        self.assertEqual(check_listen(tile4), 2)
