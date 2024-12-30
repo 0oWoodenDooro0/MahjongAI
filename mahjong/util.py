@@ -229,6 +229,7 @@ def check_listen(hand_tiles: list[Tile]) -> int:
     result: list[int] = _count_combos_and_partners(hand_tiles)
     combos: int = result[0]
     partners: int = result[1]
+    combos += (16 - len(copied_tiles)) // 3
 
     if combos + partners <= 6:
         return 10 - 2 * combos - partners
