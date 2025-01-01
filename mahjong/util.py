@@ -212,9 +212,8 @@ def check_listen(hand_tiles: list[Tile]) -> int:
             result[1] += 1
             return result
 
-        sub_tiles.remove(min_tile)
-        sub_tiles.remove(min_tile.next_seq_tile(1))
-        sub_tiles.remove(min_tile.next_seq_tile(2))
+        for i in range(3):
+            sub_tiles.remove(min_tile + i)
         result = _count_combos_and_partners(sub_tiles)
         result[0] += 1
         return result
