@@ -20,21 +20,22 @@ def check_is_kong(
     return None
 
 
-def check_is_closed_kong(
-    tiles: list[Tile], draw_tile: Tile
-) -> Optional[tuple[Tile, Tile, Tile, Tile]]:
-    if tiles.count(draw_tile) >= 3:
-        return draw_tile, draw_tile, draw_tile, draw_tile
+def check_is_closed_kong(tiles: list[Tile]) -> Optional[tuple[Tile, Tile, Tile, Tile]]:
+    for i in range(34):
+        if tiles.count(Tile(i)) == 4:
+            return Tile(i), Tile(i), Tile(i), Tile(i)
     return None
 
 
-def check_is_add_kong(
-    decalaration: list[tuple[Tile, Tile, Tile] | tuple[Tile, Tile, Tile, Tile]],
-    draw_tile: Tile,
-) -> Optional[Tile]:
+def check_is_add_kong(decalaration: list[tuple[Tile, Tile, Tile] | tuple[Tile, Tile, Tile, Tile]], hand: list[Tile]) -> \
+        Optional[list[Tile]]:
+    kong_list = []
     for tiles in decalaration:
-        if tiles.count(draw_tile) == 3:
-            return draw_tile
+        for tile in set(hand):
+            if tiles.count(tile) == 3:
+                kong_list.append(tile)
+    if kong_list:
+        return kong_list
     return None
 
 
@@ -119,6 +120,55 @@ def check_is_win(tiles: list[Tile], discard_tile: Tile) -> bool:
 
     copied_tiles = tiles.copy()
     copied_tiles.append(discard_tile)
+
+    pairs: list = [i for i, c in Counter(copied_tiles).items() if c >= 2]
+    for pair in pairs:
+        sub_tiles = copied_tiles.copy()
+        sub_tiles.remove(pair)
+        sub_tiles.remove(pair)
+        if _iswin(sub_tiles):
+            return True
+    return False
+
+
+def check_is_self_win(tiles: list[Tile]) -> bool:
+    def _iswin(tiles: list[Tile]) -> bool:
+        if len(tiles) == 0:
+            return True
+
+        min_tile = min(tiles)
+        sub_tiles = tiles.copy()
+
+        if tiles.count(min_tile) >= 3:
+            for _ in range(3):
+                sub_tiles.remove(min_tile)
+            return _iswin(sub_tiles)
+
+        if min_tile >= Tile.W1:
+            return False
+        elif (min_tile + 1 not in tiles) or (min_tile + 2 not in tiles):
+            return False
+        elif (min_tile % 9 + 1 != (min_tile + 1) % 9) or (min_tile % 9 + 2 != (min_tile + 2) % 9):
+            return False
+
+        sub_tiles = tiles.copy()
+        for i in range(3):
+            sub_tiles.remove(min_tile + i)
+
+        return _iswin(sub_tiles)
+
+    # ---------------------------------------------------------
+    """#定理01：
+
+    一副牌P，若把一個對子拿掉後，假設此時數字最小的牌是「x」，
+
+    若x的張數是3張以上，則拿掉3張x（一刻）後，剩下牌為Q。
+    否則拿掉x, x+1, x+2（一順）之後，剩下的牌為Q。（若無法拿，則P沒胡）
+
+    則「P胡」若且唯若「Q胡」。
+    """
+
+    copied_tiles = tiles.copy()
 
     pairs: list = [i for i, c in Counter(copied_tiles).items() if c >= 2]
     for pair in pairs:

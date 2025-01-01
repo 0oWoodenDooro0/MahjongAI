@@ -1,3 +1,5 @@
+import numpy as np
+
 from .tile import Tile
 
 
@@ -22,3 +24,10 @@ class Player:
         for index in range(len(self.declaration)):
             if self.declaration[index] == (tile, tile, tile):
                 self.declaration[index] = (tile, tile, tile, tile)
+
+    def get_mask(self):
+        data = list(int(self.hand.count(Tile(i)) > 0) for i in range(34))
+        return np.asarray(data, dtype=np.int8)
+
+    def __str__(self):
+        return f"Player{self.turn}"

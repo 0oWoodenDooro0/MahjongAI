@@ -9,6 +9,7 @@ from mahjong import (
     check_is_pong,
     check_is_win,
     check_listen,
+    check_is_self_win
 )
 
 
@@ -47,20 +48,15 @@ class TestMahjong(TestCase):
         self.assertIsNone(check_is_kong([Tile.D3, Tile.D2, Tile.D3], Tile.D3))
 
     def test_check_is_closed_kong(self):
-        self.assertEqual(
-            (Tile.D3, Tile.D3, Tile.D3, Tile.D3),
-            check_is_closed_kong([Tile.D3, Tile.D3, Tile.D3], Tile.D3),
-        )
-        self.assertIsNone(check_is_closed_kong([Tile.D3, Tile.D2, Tile.D3], Tile.D3))
+        self.assertEqual((Tile.D3, Tile.D3, Tile.D3, Tile.D3),
+                         check_is_closed_kong([Tile.D3, Tile.D3, Tile.D3, Tile.D3]))
+        self.assertIsNone(check_is_closed_kong([Tile.D3, Tile.D2, Tile.D3, Tile.D3]))
 
     def test_check_is_add_kong(self):
-        self.assertEqual(
-            Tile.D3,
-            check_is_add_kong(
-                [(Tile.C1, Tile.C2, Tile.C3), (Tile.D3, Tile.D3, Tile.D3)], Tile.D3
-            ),
-        )
-        self.assertIsNone(check_is_add_kong([(Tile.C1, Tile.C2, Tile.C3)], Tile.D3))
+        self.assertEqual(Tile.D3,
+                         check_is_add_kong([(Tile.C1, Tile.C2, Tile.C3), (Tile.D3, Tile.D3, Tile.D3)], [Tile.D3])[0])
+        self.assertIsNone(check_is_add_kong([(Tile.C1, Tile.C2, Tile.C3)], [Tile.D3]))
+
 
     def test_check_is_pong(self):
         self.assertEqual(
@@ -71,6 +67,36 @@ class TestMahjong(TestCase):
             check_is_pong([Tile.D3, Tile.D3, Tile.D3], Tile.D3),
         )
         self.assertIsNone(check_is_pong([Tile.D3, Tile.D2], Tile.D3))
+
+    def test_check_is_self_win(self):
+        tile_win_list1 = [Tile.D3, Tile.D3, Tile.C7, Tile.C7, Tile.C7]
+        tile_win_list2 = [Tile.D3, Tile.D3, Tile.C7, Tile.C7, Tile.W1]
+        tile_win_list3 = [Tile.D3, Tile.D3, Tile.D3, Tile.C7, Tile.C7, Tile.C8, Tile.C8, Tile.B7, Tile.B7, Tile.B7,
+                          Tile.C8]
+        tile_win_list4 = [Tile.D3, Tile.D3, Tile.D3, Tile.C7, Tile.C7, Tile.C8, Tile.C8, Tile.B7, Tile.B7, Tile.B7,
+                          Tile.C7]
+        tile_win_list5 = [Tile.D3, Tile.D3, Tile.D3, Tile.C7, Tile.C7, Tile.C8, Tile.C8, Tile.B7, Tile.B7, Tile.B7,
+                          Tile.B7]
+        tile_win_list6 = [Tile.D3, Tile.D3, Tile.D3, Tile.C7, Tile.C7, Tile.C8, Tile.C8, Tile.B7, Tile.B7, Tile.B7,
+                          Tile.W1]
+        tile_win_list7 = [Tile.D1, Tile.D3, Tile.C4, Tile.C4, Tile.C4, Tile.B1, Tile.B1, Tile.D2]
+        tile_win_list8 = [Tile.D1, Tile.D3, Tile.C4, Tile.C4, Tile.C4, Tile.B1, Tile.B1, Tile.W1]
+        tile_win_list9 = [Tile.D3, Tile.D3, Tile.D3, Tile.C7, Tile.C7, Tile.C8, Tile.C8, Tile.D9, Tile.B1, Tile.B2,
+                          Tile.C7]
+        tile_win_list10 = [Tile.D3, Tile.D3, Tile.D3, Tile.C7, Tile.C7, Tile.C8, Tile.C8, Tile.W3, Tile.W4,
+                           Tile.Dragon1, Tile.C7]
+        self.assertTrue(check_is_self_win(tile_win_list1))
+        self.assertFalse(check_is_self_win(tile_win_list2))
+
+        self.assertTrue(check_is_self_win(tile_win_list3))
+        self.assertTrue(check_is_self_win(tile_win_list4))
+        self.assertFalse(check_is_self_win(tile_win_list5))
+        self.assertFalse(check_is_self_win(tile_win_list6))
+
+        self.assertTrue(check_is_self_win(tile_win_list7))
+        self.assertFalse(check_is_self_win(tile_win_list8))
+        self.assertFalse(check_is_self_win(tile_win_list9))
+        self.assertFalse(check_is_self_win(tile_win_list10))
 
     def test_check_is_win(self):
         tile_win_list1 = [Tile.D3, Tile.D3, Tile.C7, Tile.C7]

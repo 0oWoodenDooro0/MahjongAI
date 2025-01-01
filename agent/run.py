@@ -8,14 +8,14 @@ def draw_a_tile(game: Game):
     draw_tile = game.draw()
     if draw_tile is None:
         return
-    player = game.players[game.turn]
+    player = game.get_turn_player()
     if check_is_win(player.hand, draw_tile):
         if random.random() < 0.5:
             game.win()
     elif add_kong_tile := check_is_add_kong(player.declaration, draw_tile):
         if random.random() < 0.5:
             game.add_kong(add_kong_tile)
-    elif closed_kong_tiles := check_is_closed_kong(player.hand, draw_tile):
+    elif closed_kong_tiles := check_is_closed_kong(player.hand):
         if random.random() < 0.5:
             game.closed_kong(draw_tile, closed_kong_tiles)
             discard_tile = random.choice(player.hand)
