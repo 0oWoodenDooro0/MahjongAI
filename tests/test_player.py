@@ -29,3 +29,18 @@ class TestPlayer(TestCase):
         player.add_to_declaration((Tile.D7, Tile.D8, Tile.D9))
         player.add_kong(Tile.D3)
         self.assertEqual(player.declaration[1], (Tile.D3, Tile.D3, Tile.D3, Tile.D3))
+
+    def test_get_mask(self):
+        player = Player(0)
+        player.add_to_hand(Tile.C1)
+        player.add_to_hand(Tile.C2)
+        mask = player.get_mask()
+        for i in range(34):
+            if i == 0 or i == 1:
+                self.assertEqual(1, mask[i])
+            else:
+                self.assertEqual(0, mask[i])
+
+    def test_player_str(self):
+        player = Player(0)
+        self.assertEqual(str(player), "Player0")
