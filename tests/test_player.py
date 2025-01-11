@@ -19,16 +19,57 @@ class TestPlayer(TestCase):
 
     def test_add_to_declaration(self):
         player = Player(0)
+        player.add_to_hand(Tile.C1)
+        player.add_to_hand(Tile.C2)
+        player.add_to_hand(Tile.C3)
         player.add_to_declaration((Tile.C1, Tile.C2, Tile.C3))
+        self.assertEqual(0, len(player.hand))
         self.assertEqual((Tile.C1, Tile.C2, Tile.C3), player.declaration[0])
+
+    def test_chow(self):
+        player = Player(0)
+        player.add_to_hand(Tile.C1)
+        player.add_to_hand(Tile.C3)
+        player.chow((Tile.C1, Tile.C2, Tile.C3), Tile.C2)
+        self.assertEqual(0, len(player.hand))
+        self.assertEqual((Tile.C1, Tile.C2, Tile.C3), player.declaration[0])
+
+    def test_pong(self):
+        player = Player(0)
+        player.add_to_hand(Tile.C1)
+        player.add_to_hand(Tile.C1)
+        player.pong((Tile.C1, Tile.C1, Tile.C1), Tile.C1)
+        self.assertEqual(0, len(player.hand))
+        self.assertEqual((Tile.C1, Tile.C1, Tile.C1), player.declaration[0])
+
+    def test_kong(self):
+        player = Player(0)
+        player.add_to_hand(Tile.C1)
+        player.add_to_hand(Tile.C1)
+        player.add_to_hand(Tile.C1)
+        player.kong((Tile.C1, Tile.C1, Tile.C1, Tile.C1), Tile.C1)
+        self.assertEqual(0, len(player.hand))
+        self.assertEqual((Tile.C1, Tile.C1, Tile.C1, Tile.C1), player.declaration[0])
+
+    def test_closed_kong(self):
+        player = Player(0)
+        player.add_to_hand(Tile.C1)
+        player.add_to_hand(Tile.C1)
+        player.add_to_hand(Tile.C1)
+        player.add_to_hand(Tile.C1)
+        player.closed_kong((Tile.C1, Tile.C1, Tile.C1, Tile.C1))
+        self.assertEqual(0, len(player.hand))
+        self.assertEqual((Tile.C1, Tile.C1, Tile.C1, Tile.C1), player.declaration[0])
 
     def test_add_kong(self):
         player = Player(0)
-        player.add_to_declaration((Tile.C1, Tile.C2, Tile.C3))
-        player.add_to_declaration((Tile.D3, Tile.D3, Tile.D3))
-        player.add_to_declaration((Tile.D7, Tile.D8, Tile.D9))
-        player.add_kong(Tile.D3)
-        self.assertEqual(player.declaration[1], (Tile.D3, Tile.D3, Tile.D3, Tile.D3))
+        player.add_to_hand(Tile.C1)
+        player.add_to_hand(Tile.C1)
+        player.pong((Tile.C1, Tile.C1, Tile.C1), Tile.C1)
+        player.add_to_hand(Tile.C1)
+        player.add_kong(Tile.C1)
+        self.assertEqual(0, len(player.hand))
+        self.assertEqual((Tile.C1, Tile.C1, Tile.C1, Tile.C1), player.declaration[0])
 
     def test_get_mask(self):
         player = Player(0)
@@ -41,6 +82,7 @@ class TestPlayer(TestCase):
             else:
                 self.assertEqual(0, mask[i])
 
-    def test_player_str(self):
+    def test_str(self):
         player = Player(0)
-        self.assertEqual(str(player), "Player0")
+        self.assertEqual(str(player), "Player 0")
+
