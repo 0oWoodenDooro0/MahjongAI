@@ -1,53 +1,46 @@
-from typing import List, Tuple
-
-import numpy as np
-
+from .declaration import Declaration
+from .hand import Hand
+from .meld import Meld, SequenceMeld, TripletMeld, QuadrupletMeld
 from .tile import Tile
 
 
 class Player:
     def __init__(self, turn: int):
-        self.turn = turn
-        self.hand: List[Tile] = []
-        self.declaration: List[Tuple[Tile, Tile, Tile] | Tuple[Tile, Tile, Tile, Tile]] = []
+        self.turn: int = turn
+        self.hand: Hand = Hand()
+        self.declaration: Declaration = Declaration()
 
-    def add_to_hand(self, tile: Tile):
-        self.hand.append(tile)
+    def draw(self, tile: Tile):
+        self.hand.draw(tile)
 
     def discard(self, tile: Tile):
         if tile not in self.hand:
             raise ValueError("tile not in hand")
-        self.hand.remove(tile)
+        self.hand.discard(tile)
 
-    def add_to_declaration(self, tiles: Tuple[Tile, Tile, Tile] | Tuple[Tile, Tile, Tile, Tile]):
-        for tile in tiles:
+    def add_to_declaration(self, meld: Meld):
+        for tile in meld:
             self.discard(tile)
-        self.declaration.append(tiles)
+        self.declaration.call(meld)
 
-    def chow(self, chow_tiles: Tuple[Tile, Tile, Tile], discard_tile: Tile):
-        self.hand.append(discard_tile)
+    def chow(self, chow_tiles: SequenceMeld, discard_tile: Tile):
+        self.hand.draw(discard_tile)
         self.add_to_declaration(chow_tiles)
 
-    def pong(self, pong_tiles: Tuple[Tile, Tile, Tile], discard_tile: Tile):
-        self.hand.append(discard_tile)
+    def pong(self, pong_tiles: TripletMeld, discard_tile: Tile):
+        self.hand.draw(discard_tile)
         self.add_to_declaration(pong_tiles)
 
-    def kong(self, kong_tiles: Tuple[Tile, Tile, Tile, Tile], discard_tile: Tile):
-        self.hand.append(discard_tile)
+    def kong(self, kong_tiles: QuadrupletMeld, discard_tile: Tile):
+        self.hand.draw(discard_tile)
         self.add_to_declaration(kong_tiles)
 
-    def closed_kong(self, closed_kong_tiles: Tuple[Tile, Tile, Tile, Tile]):
+    def closed_kong(self, closed_kong_tiles: QuadrupletMeld):
         self.add_to_declaration(closed_kong_tiles)
 
     def add_kong(self, add_kong_tile: Tile):
         self.discard(add_kong_tile)
-        for index in range(len(self.declaration)):
-            if self.declaration[index] == (add_kong_tile, add_kong_tile, add_kong_tile):
-                self.declaration[index] = (add_kong_tile, add_kong_tile, add_kong_tile, add_kong_tile)
-
-    def get_mask(self):
-        data = list(int(self.hand.count(Tile(i)) > 0) for i in range(34))
-        return np.asarray(data, dtype=np.int8)
+        self.declaration.add_kong(add_kong_tile)
 
     def __str__(self):
         return f"Player {self.turn}"

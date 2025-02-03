@@ -1,5 +1,6 @@
-from typing import Optional
+from typing import Optional, Tuple
 
+from .meld import SequenceMeld, TripletMeld, QuadrupletMeld
 from .action import Action
 from .board import Board
 from .player import Player
@@ -19,7 +20,7 @@ class Game:
     def init_game(self):
         self.deal()
         draw_tile = self.draw()
-        self.get_turn_player().add_to_hand(draw_tile)
+        self.get_turn_player().draw(draw_tile)
         self.next_step = self.check_draw_next_step()
         infos = self.next_step[0]
         observations = self.get_observation()
@@ -29,7 +30,7 @@ class Game:
         for _ in range(16):
             for player in self.players:
                 draw_tile = self.board.draw()
-                player.add_to_hand(draw_tile)
+                player.draw(draw_tile)
 
     def draw(self) -> Optional[Tile]:
         draw_tile = self.board.draw()
@@ -47,56 +48,9 @@ class Game:
     def turn_next(self):
         self.turn = (self.turn + 1) % len(self.players)
 
-    def chow(self, chow_tiles: tuple[Tile, Tile, Tile]):
-        player = self.get_turn_player()
-        print(f"{player} chow {chow_tiles}!")
-        player.add_to_hand(self.get_discard_tile())
-        for tile in chow_tiles:
-            player.discard(tile)
-        player.add_to_declaration(chow_tiles)
-
-    def pong(self, pong_tiles: tuple[Tile, Tile, Tile]):
-        player = self.get_turn_player()
-        print(f"{player} pong {pong_tiles}!")
-        player.add_to_hand(self.get_discard_tile())
-        for tile in pong_tiles:
-            player.discard(tile)
-        player.add_to_declaration(pong_tiles)
-
-    def kong(self, kong_tiles: tuple[Tile, Tile, Tile, Tile]):
-        player = self.get_turn_player()
-        print(f"{player} kong {kong_tiles}!")
-        player.add_to_hand(self.get_discard_tile())
-        for tile in kong_tiles:
-            player.discard(tile)
-        player.add_to_declaration(kong_tiles)
-        player.add_to_hand(self.draw())
-
     def win(self):
         print(f"{self.get_turn_player()} wins!")
         self.over = True
-
-    def add_kong(self, add_kong_tile: Tile):
-        player = self.get_turn_player()
-        print(f"{player} add kong!")
-        player.add_kong(add_kong_tile)
-        player.add_to_hand(self.draw())
-
-    def closed_kong(self, draw_tile: Tile, closed_kong_tiles: tuple[Tile, Tile, Tile, Tile]):
-        player = self.get_turn_player()
-        print(f"{player} closed kong!")
-        player.add_to_hand(draw_tile)
-        for tile in closed_kong_tiles:
-            player.discard(tile)
-        player.add_to_declaration(closed_kong_tiles)
-        player.add_to_hand(self.draw())
-
-    def discard(self, discard_tile: Tile):
-        player = self.get_turn_player()
-        print(f"{player} discard {discard_tile}!")
-        player.discard(discard_tile)
-        self.board.discard_to_river(discard_tile)
-        print(self.board.river)
 
     def check_discard_next_step(self, discard_tile: Tile):
         next_step = []
@@ -114,7 +68,7 @@ class Game:
                 next_step.append({"pong": {"player": player.turn, "tile": pong_tiles}})
         for player in self.players:
             if player.turn == (self.turn + 1) % len(self.players):
-                if chow_tiles_list := check_is_chow(player.declaration, discard_tile):
+                if chow_tiles_list := check_is_chow(player.hand, discard_tile):
                     for chow_tiles in chow_tiles_list:
                         next_step.append({"chow": {"player": player.turn, "tile": chow_tiles}})
         return next_step
@@ -124,43 +78,45 @@ class Game:
         player = self.get_turn_player()
         if check_is_self_win(player.hand):
             next_step.append({"win": {"player": player.turn, "tile": None}})
-        if add_kong_tile_list := check_is_add_kong(player.declaration, player.hand):
+        if add_kong_tile_list := check_is_add_kong(player.hand, player.declaration):
             for add_kong_tile in add_kong_tile_list:
                 next_step.append({"kong": {"player": player.turn, "tile": (add_kong_tile,), "type": "add_kong"}})
-        if closed_kong_tiles := check_is_closed_kong(player.hand):
+        if closed_kong_tiles := check_is_closed_kong(player.hand.tiles):
             next_step.append({"kong": {"player": player.turn, "tile": closed_kong_tiles, "type": "closed_kong"}})
         if not next_step:
-            next_step.append({"discard": {"player": player.turn, "tile": None, "mask": player.get_mask()}})
+            next_step.append({"discard": {"player": player.turn, "tile": None, "mask": player.hand.mask()}})
         return next_step
 
-    def step(self, action: Action, turn: int, tiles: Optional[tuple[Tile]]):
+    def step(self, action: Action, turn: int,
+             tiles: Optional[Tuple[Tile, Tile, Tile, Tile] | Tuple[Tile, Tile, Tile] | Tuple[Tile]]):
         player = self.players[turn]
         rewards = {}
         infos = {}
         match action:
             case Action.DISCARD:
-                self.discard(tiles[0])
+                player.discard(tiles[0])
+                self.board.discard_to_river(tiles[0])
                 discard_tile = tiles[0]
                 self.next_step = self.check_discard_next_step(discard_tile)
                 self.turn_next()
             case Action.CHOW:
                 self.turn = player.turn
-                self.chow(tiles)
-                self.next_step = [{"discard": {"player": self.turn, "tile": None, "mask": player.get_mask()}}]
+                player.chow(SequenceMeld(tiles), self.get_discard_tile())
+                self.next_step = [{"discard": {"player": self.turn, "tile": None, "mask": player.hand.mask()}}]
             case Action.PONG:
                 self.turn = player.turn
-                self.pong(tiles)
-                self.next_step = [{"discard": {"player": self.turn, "tile": None, "mask": player.get_mask()}}]
+                player.pong(TripletMeld(tiles), self.get_discard_tile())
+                self.next_step = [{"discard": {"player": self.turn, "tile": None, "mask": player.hand.mask()}}]
             case Action.KONG:
                 self.turn = player.turn
-                self.kong(tiles)
-                self.next_step = [{"discard": {"player": self.turn, "tile": None, "mask": player.get_mask()}}]
+                player.kong(QuadrupletMeld(tiles), self.get_discard_tile())
+                self.next_step = [{"discard": {"player": self.turn, "tile": None, "mask": player.hand.mask()}}]
             case Action.CLOSEDKONG:
-                self.closed_kong(tiles[0], tiles)
-                self.next_step = [{"discard": {"player": self.turn, "tile": None, "mask": player.get_mask()}}]
+                player.closed_kong(QuadrupletMeld(tiles))
+                self.next_step = [{"discard": {"player": self.turn, "tile": None, "mask": player.hand.mask()}}]
             case Action.ADDKONG:
-                self.add_kong(tiles[0])
-                self.next_step = [{"discard": {"player": self.turn, "tile": None, "mask": player.get_mask()}}]
+                player.add_kong(tiles[0])
+                self.next_step = [{"discard": {"player": self.turn, "tile": None, "mask": player.hand.mask()}}]
             case Action.WIN:
                 self.win()
             case Action.NOTHING:
@@ -171,7 +127,7 @@ class Game:
             draw_tile = self.draw()
             if draw_tile is None:
                 return self.get_observation(), rewards, self.over, infos
-            self.get_turn_player().add_to_hand(draw_tile)
+            self.get_turn_player().draw(draw_tile)
             self.next_step = self.check_draw_next_step()
         infos = self.next_step[0]
 
