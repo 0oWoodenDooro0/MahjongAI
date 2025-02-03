@@ -1,85 +1,76 @@
 from collections import Counter
 from typing import Optional
 
+from .hand import Hand
+from .declaration import Declaration
+from .meld import QuadrupletMeld, TripletMeld, SequenceMeld
 from .tile import Tile
 
 
-def check_is_pong(
-    tiles: list[Tile], discard_tile: Tile
-) -> Optional[tuple[Tile, Tile, Tile]]:
-    if tiles.count(discard_tile) >= 2:
-        return discard_tile, discard_tile, discard_tile
+def check_is_pong(hand: Hand, discard_tile: Tile) -> Optional[TripletMeld]:
+    if hand.count(discard_tile) >= 2:
+        return TripletMeld((discard_tile, discard_tile, discard_tile))
     return None
 
 
-def check_is_kong(
-    tiles: list[Tile], discard_tile: Tile
-) -> Optional[tuple[Tile, Tile, Tile, Tile]]:
-    if tiles.count(discard_tile) >= 3:
-        return discard_tile, discard_tile, discard_tile, discard_tile
+def check_is_kong(hand: Hand, discard_tile: Tile) -> Optional[QuadrupletMeld]:
+    if hand.count(discard_tile) >= 3:
+        return QuadrupletMeld((discard_tile, discard_tile, discard_tile, discard_tile))
     return None
 
 
-def check_is_closed_kong(tiles: list[Tile]) -> Optional[tuple[Tile, Tile, Tile, Tile]]:
+def check_is_closed_kong(hand: Hand) -> Optional[QuadrupletMeld]:
     for i in range(34):
-        if tiles.count(Tile(i)) == 4:
-            return Tile(i), Tile(i), Tile(i), Tile(i)
+        kong_tile = Tile(i)
+        if hand.count(kong_tile) == 4:
+            return QuadrupletMeld((kong_tile, kong_tile, kong_tile, kong_tile))
     return None
 
 
-def check_is_add_kong(decalaration: list[tuple[Tile, Tile, Tile] | tuple[Tile, Tile, Tile, Tile]], hand: list[Tile]) -> \
-        Optional[list[Tile]]:
+def check_is_add_kong(hand: Hand, declaration: Declaration) -> Optional[list[Tile]]:
     kong_list = []
-    for tiles in decalaration:
+    for meld in declaration:
         for tile in set(hand):
-            if tiles.count(tile) == 3:
+            if TripletMeld.is_valid(meld.tiles):
                 kong_list.append(tile)
     if kong_list:
         return kong_list
     return None
 
 
-def check_is_chow(
-    tiles: list[Tile], discard_tile: Tile
-) -> Optional[list[tuple[Tile, Tile, Tile]]]:
+def check_is_chow(hand: Hand, discard_tile: Tile) -> Optional[list[SequenceMeld]]:
     if discard_tile >= Tile.W1:
         return None
     first: bool = (
-        (discard_tile % 9 < 7)
-        and (discard_tile + 1 in tiles)
-        and (discard_tile + 2 in tiles)
+            (discard_tile % 9 < 7)
+            and (discard_tile + 1 in hand)
+            and (discard_tile + 2 in hand)
     )
     middle: bool = (
-        (discard_tile % 9 < 8)
-        and (discard_tile % 9 > 0)
-        and (discard_tile + 1 in tiles)
-        and (discard_tile - 1 in tiles)
+            (discard_tile % 9 < 8)
+            and (discard_tile % 9 > 0)
+            and (discard_tile + 1 in hand)
+            and (discard_tile - 1 in hand)
     )
     last: bool = (
-        (discard_tile % 9 > 1)
-        and (discard_tile - 1 in tiles)
-        and (discard_tile - 2 in tiles)
+            (discard_tile % 9 > 1)
+            and (discard_tile - 1 in hand)
+            and (discard_tile - 2 in hand)
     )
     possibles = []
     if not any((first, middle, last)):
         return None
     if last:
-        possibles.append(
-            (Tile(discard_tile - 2), Tile(discard_tile - 1), Tile(discard_tile))
-        )
+        possibles.append(SequenceMeld((Tile(discard_tile - 2), Tile(discard_tile - 1), Tile(discard_tile))))
     if middle:
-        possibles.append(
-            (Tile(discard_tile - 1), Tile(discard_tile), Tile(discard_tile + 1))
-        )
+        possibles.append(SequenceMeld((Tile(discard_tile - 1), Tile(discard_tile), Tile(discard_tile + 1))))
     if first:
-        possibles.append(
-            (Tile(discard_tile), Tile(discard_tile + 1), Tile(discard_tile + 2))
-        )
+        possibles.append(SequenceMeld((Tile(discard_tile), Tile(discard_tile + 1), Tile(discard_tile + 2))))
 
     return possibles
 
 
-def check_is_win(tiles: list[Tile], discard_tile: Tile) -> bool:
+def check_is_win(hand: Hand, discard_tile: Tile) -> bool:
     def _iswin(tiles: list[Tile]) -> bool:
         if len(tiles) == 0:
             return True
@@ -97,7 +88,7 @@ def check_is_win(tiles: list[Tile], discard_tile: Tile) -> bool:
         elif (min_tile + 1 not in tiles) or (min_tile + 2 not in tiles):
             return False
         elif (min_tile % 9 + 1 != (min_tile + 1) % 9) or (
-            min_tile % 9 + 2 != (min_tile + 2) % 9
+                min_tile % 9 + 2 != (min_tile + 2) % 9
         ):
             return False
 
@@ -118,7 +109,7 @@ def check_is_win(tiles: list[Tile], discard_tile: Tile) -> bool:
     則「P胡」若且唯若「Q胡」。
     """
 
-    copied_tiles = tiles.copy()
+    copied_tiles = hand.tiles.copy()
     copied_tiles.append(discard_tile)
 
     pairs: list = [i for i, c in Counter(copied_tiles).items() if c >= 2]
@@ -131,7 +122,7 @@ def check_is_win(tiles: list[Tile], discard_tile: Tile) -> bool:
     return False
 
 
-def check_is_self_win(tiles: list[Tile]) -> bool:
+def check_is_self_win(hand: Hand) -> bool:
     def _iswin(tiles: list[Tile]) -> bool:
         if len(tiles) == 0:
             return True
@@ -168,7 +159,7 @@ def check_is_self_win(tiles: list[Tile]) -> bool:
     則「P胡」若且唯若「Q胡」。
     """
 
-    copied_tiles = tiles.copy()
+    copied_tiles = hand.tiles.copy()
 
     pairs: list = [i for i, c in Counter(copied_tiles).items() if c >= 2]
     for pair in pairs:
@@ -180,7 +171,7 @@ def check_is_self_win(tiles: list[Tile]) -> bool:
     return False
 
 
-def check_listen(hand_tiles: list[Tile]) -> int:
+def check_listen(hand: Hand) -> int:
     def _count_combos_and_partners(tiles: list[Tile]) -> list[int]:
         if len(tiles) == 0:
             return [0, 0]
@@ -197,7 +188,7 @@ def check_listen(hand_tiles: list[Tile]) -> int:
             return result
 
         if ((next := min_tile.next_seq_tile(1)) not in tiles) or (
-            min_tile.next_seq_tile(2) not in tiles
+                min_tile.next_seq_tile(2) not in tiles
         ):
             sub_tiles.remove(min_tile)
             if tiles.count(min_tile) == 2:
@@ -222,11 +213,11 @@ def check_listen(hand_tiles: list[Tile]) -> int:
     # ---------------------------------------------------------
     # reference from https://www.bilibili.com/opus/563332111030452322
 
-    copied_tiles = hand_tiles.copy()
+    copied_tiles = hand.tiles.copy()
     pairs: list = [i for i, c in Counter(copied_tiles).items() if c >= 2]
     has_pair: bool = len(pairs) > 0
 
-    result: list[int] = _count_combos_and_partners(hand_tiles)
+    result: list[int] = _count_combos_and_partners(hand.tiles)
     combos: int = result[0]
     partners: int = result[1]
     combos += (16 - len(copied_tiles)) // 3
