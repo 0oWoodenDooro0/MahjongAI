@@ -6,6 +6,8 @@ from .tile import Tile
 
 class Meld(ABC):
     def __init__(self, tiles: Tuple[Tile, Tile, Tile] | Tuple[Tile, Tile, Tile, Tile]):
+        if not self.is_valid(tiles):
+            raise ValueError("Invalid tiles of Meld")
         self.tiles = tiles
 
     def __iter__(self):

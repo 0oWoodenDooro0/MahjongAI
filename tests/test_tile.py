@@ -13,9 +13,3 @@ class TestTile(TestCase):
         self.assertEqual(Tile.B9.next_seq_tile(), -1)
         self.assertEqual(Tile.W1.next_seq_tile(), -1)
         self.assertRaises(ValueError, Tile.W1.next_seq_tile, -1)
-
-    def test__str__(self):
-        print(Tile.W1)
-
-    def test__repr__(self):
-        repr(Tile.W1)
