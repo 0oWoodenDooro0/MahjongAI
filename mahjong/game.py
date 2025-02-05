@@ -1,12 +1,10 @@
 from typing import Optional, Tuple
 
-from .meld import SequenceMeld, TripletMeld, QuadrupletMeld
 from .action import Action
 from .board import Board
+from .meld import SequenceMeld, TripletMeld, QuadrupletMeld
 from .player import Player
 from .tile import Tile
-from .util import check_is_self_win, check_is_win, check_is_kong, check_is_pong, check_is_chow, check_is_add_kong, \
-    check_is_closed_kong
 
 
 class Game:
@@ -57,18 +55,18 @@ class Game:
         for player in self.players:
             if player.turn == self.turn:
                 continue
-            elif check_is_win(player.hand, discard_tile):
+            elif player.can_win(discard_tile):
                 next_step.append({"win": {"player": player.turn, "tile": None}})
         for player in self.players:
             if player.turn == self.turn:
                 continue
-            if kong_tiles := check_is_kong(player.hand, discard_tile):
+            if kong_tiles := player.can_kong(discard_tile):
                 next_step.append({"kong": {"player": player.turn, "tile": kong_tiles, "type": "kong"}})
-            if pong_tiles := check_is_pong(player.hand, discard_tile):
+            if pong_tiles := player.can_pong(discard_tile):
                 next_step.append({"pong": {"player": player.turn, "tile": pong_tiles}})
         for player in self.players:
             if player.turn == (self.turn + 1) % len(self.players):
-                if chow_tiles_list := check_is_chow(player.hand, discard_tile):
+                if chow_tiles_list := player.can_chow(discard_tile):
                     for chow_tiles in chow_tiles_list:
                         next_step.append({"chow": {"player": player.turn, "tile": chow_tiles}})
         return next_step
@@ -76,12 +74,12 @@ class Game:
     def check_draw_next_step(self):
         next_step = []
         player = self.get_turn_player()
-        if check_is_self_win(player.hand):
+        if player.can_self_win():
             next_step.append({"win": {"player": player.turn, "tile": None}})
-        if add_kong_tile_list := check_is_add_kong(player.hand, player.declaration):
+        if add_kong_tile_list := player.can_add_kong():
             for add_kong_tile in add_kong_tile_list:
                 next_step.append({"kong": {"player": player.turn, "tile": (add_kong_tile,), "type": "add_kong"}})
-        if closed_kong_tiles := check_is_closed_kong(player.hand.tiles):
+        if closed_kong_tiles := player.can_closed_kong():
             next_step.append({"kong": {"player": player.turn, "tile": closed_kong_tiles, "type": "closed_kong"}})
         if not next_step:
             next_step.append({"discard": {"player": player.turn, "tile": None, "mask": player.hand.mask()}})
