@@ -78,10 +78,9 @@ class MahjongEnv(ParallelEnv):
         agent = list(action.keys())[0]
         if agent == "discard":
             observations, rewards, terminations, infos = self.game.step(Action.DISCARD, action[agent]["player"],
-                                                                        (Tile(action[agent]["action"]),))
+                                                                        tile=Tile(action[agent]["action"]))
         elif action[agent]["action"] == 0:
-            print("nothing")
-            observations, rewards, terminations, infos = self.game.step(Action.NOTHING, action[agent]["player"], None)
+            observations, rewards, terminations, infos = self.game.step(Action.NOTHING, action[agent]["player"])
         elif agent == "chow":
             observations, rewards, terminations, infos = self.game.step(Action.CHOW, action[agent]["player"],
                                                                         action[agent]["tile"])
@@ -94,7 +93,7 @@ class MahjongEnv(ParallelEnv):
                                                                             action[agent]["tile"])
             elif action[agent]["type"] == "add_kong":
                 observations, rewards, terminations, infos = self.game.step(Action.ADDKONG, action[agent]["player"],
-                                                                            action[agent]["tile"])
+                                                                            tile=action[agent]["tile"])
             elif action[agent]["type"] == "closed_kong":
                 observations, rewards, terminations, infos = self.game.step(Action.CLOSEDKONG, action[agent]["player"],
                                                                             action[agent]["tile"])

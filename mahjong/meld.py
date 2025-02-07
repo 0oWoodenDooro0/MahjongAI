@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Tuple
 
 from .tile import Tile
@@ -14,6 +14,7 @@ class Meld(ABC):
         return iter(self.tiles)
 
     @staticmethod
+    @abstractmethod
     def is_valid(tiles: Tuple[Tile, Tile, Tile] | Tuple[Tile, Tile, Tile, Tile]) -> bool:
         pass
 
