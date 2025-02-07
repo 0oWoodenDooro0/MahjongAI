@@ -8,6 +8,7 @@ while True:
     mask = None
     if agent == "discard":
         mask = infos[agent]["mask"]
+    print(infos)
     action = {agent: {"action": env.action_space(agent).sample(mask), "player": infos[agent]["player"],
                       "tile": infos[agent]["tile"], "type": infos[agent].get("type", None)}}
     observations, rewards, terminations, trucations, infos = env.step(action)

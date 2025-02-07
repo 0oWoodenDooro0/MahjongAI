@@ -1,8 +1,8 @@
-from typing import Optional, Tuple
+from typing import Optional
 
 from .action import Action
 from .board import Board
-from .meld import SequenceMeld, TripletMeld, QuadrupletMeld
+from .meld import SequenceMeld, TripletMeld, QuadrupletMeld, Meld
 from .player import Player
 from .tile import Tile
 
@@ -32,7 +32,6 @@ class Game:
 
     def draw(self) -> Optional[Tile]:
         draw_tile = self.board.draw()
-        print(f"draw {draw_tile} left {len(self.board.wall)}")
         if draw_tile is None:
             self.over = True
         return draw_tile
@@ -47,7 +46,6 @@ class Game:
         self.turn = (self.turn + 1) % len(self.players)
 
     def win(self):
-        print(f"{self.get_turn_player()} wins!")
         self.over = True
 
     def check_discard_next_step(self, discard_tile: Tile):
@@ -78,42 +76,52 @@ class Game:
             next_step.append({"win": {"player": player.turn, "tile": None}})
         if add_kong_tile_list := player.can_add_kong():
             for add_kong_tile in add_kong_tile_list:
-                next_step.append({"kong": {"player": player.turn, "tile": (add_kong_tile,), "type": "add_kong"}})
+                next_step.append({"kong": {"player": player.turn, "tile": add_kong_tile, "type": "add_kong"}})
         if closed_kong_tiles := player.can_closed_kong():
             next_step.append({"kong": {"player": player.turn, "tile": closed_kong_tiles, "type": "closed_kong"}})
         if not next_step:
             next_step.append({"discard": {"player": player.turn, "tile": None, "mask": player.hand.mask()}})
         return next_step
 
-    def step(self, action: Action, turn: int,
-             tiles: Optional[Tuple[Tile, Tile, Tile, Tile] | Tuple[Tile, Tile, Tile] | Tuple[Tile]]):
+    def step(self, action: Action, turn: int, tiles: Optional[Meld] = None, tile: Optional[Tile] = None):
         player = self.players[turn]
         rewards = {}
         infos = {}
         match action:
             case Action.DISCARD:
-                player.discard(tiles[0])
-                self.board.discard_to_river(tiles[0])
-                discard_tile = tiles[0]
-                self.next_step = self.check_discard_next_step(discard_tile)
+                if not isinstance(tile, Tile):
+                    raise AttributeError("not correct tile in discard")
+                player.discard(tile)
+                self.board.discard_to_river(tile)
+                self.next_step = self.check_discard_next_step(tile)
                 self.turn_next()
             case Action.CHOW:
                 self.turn = player.turn
-                player.chow(SequenceMeld(tiles), self.get_discard_tile())
+                if not isinstance(tiles, SequenceMeld):
+                    raise AttributeError(tiles, "not correct tile in chow")
+                player.chow(tiles, self.get_discard_tile())
                 self.next_step = [{"discard": {"player": self.turn, "tile": None, "mask": player.hand.mask()}}]
             case Action.PONG:
                 self.turn = player.turn
-                player.pong(TripletMeld(tiles), self.get_discard_tile())
+                if not isinstance(tiles, TripletMeld):
+                    raise AttributeError(tiles, "not correct meld pong")
+                player.pong(tiles, self.get_discard_tile())
                 self.next_step = [{"discard": {"player": self.turn, "tile": None, "mask": player.hand.mask()}}]
             case Action.KONG:
                 self.turn = player.turn
-                player.kong(QuadrupletMeld(tiles), self.get_discard_tile())
+                if not isinstance(tiles, QuadrupletMeld):
+                    raise AttributeError(tiles, "not correct meld in kong")
+                player.kong(tiles, self.get_discard_tile())
                 self.next_step = [{"discard": {"player": self.turn, "tile": None, "mask": player.hand.mask()}}]
             case Action.CLOSEDKONG:
-                player.closed_kong(QuadrupletMeld(tiles))
+                if not isinstance(tiles, QuadrupletMeld):
+                    raise AttributeError(tiles, "not correct meld in closed kong")
+                player.closed_kong(tiles)
                 self.next_step = [{"discard": {"player": self.turn, "tile": None, "mask": player.hand.mask()}}]
             case Action.ADDKONG:
-                player.add_kong(tiles[0])
+                if not isinstance(tile, Tile):
+                    raise AttributeError(tile, "not correct tile in add kong")
+                player.add_kong(tile)
                 self.next_step = [{"discard": {"player": self.turn, "tile": None, "mask": player.hand.mask()}}]
             case Action.WIN:
                 self.win()
@@ -134,7 +142,7 @@ class Game:
         return observations, rewards, self.over, infos
 
     def get_observation(self):
-        other = self.board.river
+        other = self.board.river.copy()
         for player in self.players:
             for declarartion in player.declaration:
                 other.extend(declarartion)

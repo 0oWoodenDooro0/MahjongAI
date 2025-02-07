@@ -34,3 +34,8 @@ class TestGame(TestCase):
         game.turn = 3
         game.turn_next()
         self.assertEqual(0, game.turn)
+
+    def test_win(self):
+        game = Game()
+        game.win()
+        self.assertTrue(game.over)
