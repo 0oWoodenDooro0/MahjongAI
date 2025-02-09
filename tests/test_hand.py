@@ -1,5 +1,7 @@
 from unittest import TestCase
 
+import numpy as np
+
 from mahjong import Player, Tile, Hand
 
 
@@ -28,3 +30,12 @@ class TestHand(TestCase):
                 self.assertEqual(1, mask[i])
             else:
                 self.assertEqual(0, mask[i])
+
+    def test_observation(self):
+        hand = Hand()
+        hand.draw(Tile.C1)
+        hand.draw(Tile.C2)
+        observation = hand.observation()
+        np.testing.assert_equal(np.asarray([np.asarray(
+            [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+                                            np.zeros(34), np.zeros(34), np.zeros(34)]), observation)

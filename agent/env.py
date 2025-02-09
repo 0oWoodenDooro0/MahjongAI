@@ -1,5 +1,7 @@
 import functools
+from typing import Tuple, Any
 
+import numpy as np
 from gymnasium import logger
 from gymnasium.spaces import Discrete
 from pettingzoo import ParallelEnv
@@ -64,7 +66,7 @@ class MahjongEnv(ParallelEnv):
         print("Game Over")
         return
 
-    def reset(self, seed=None, options=None):
+    def reset(self, seed=None, options=None) -> Tuple[np.ndarray, dict[Any]]:
         self.agents = self.possible_agents[:]
         self.game = Game()
         observations, infos = self.game.init_game()

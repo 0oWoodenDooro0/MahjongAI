@@ -20,9 +20,16 @@ class Hand:
     def count(self, tile: Tile):
         return self.tiles.count(tile)
 
-    def mask(self):
-        data = list(int(self.tiles.count(Tile(i)) > 0) for i in range(34))
+    def mask(self) -> np.ndarray:
+        data = [int(self.tiles.count(Tile(i)) > 0) for i in range(34)]
         return np.asarray(data, dtype=np.int8)
+
+    def observation(self) -> np.ndarray:
+        mask = np.asarray([self.tiles.count(Tile(i)) for i in range(34)])
+        observation = []
+        for i in range(4):
+            observation.append(np.where(mask > i, 1, 0))
+        return np.asarray(observation, dtype=np.int8)
 
     def __len__(self):
         return len(self.tiles)

@@ -1,4 +1,7 @@
-from typing import Optional
+from typing import Optional, Any
+
+import numpy as np
+from numpy import ndarray, dtype
 
 from .action import Action
 from .board import Board
@@ -21,7 +24,7 @@ class Game:
         self.get_turn_player().draw(draw_tile)
         self.next_step = self.check_draw_next_step()
         infos = self.next_step[0]
-        observations = self.get_observation()
+        observations = self.get_observations()
         return observations, infos
 
     def deal(self):
@@ -80,7 +83,7 @@ class Game:
         if closed_kong_tiles := player.can_closed_kong():
             next_step.append({"kong": {"player": player.turn, "tile": closed_kong_tiles, "type": "closed_kong"}})
         if not next_step:
-            next_step.append({"discard": {"player": player.turn, "tile": None, "mask": player.hand.mask()}})
+            next_step.append({"discard": {"player": player.turn, "tile": None}})
         return next_step
 
     def step(self, action: Action, turn: int, tiles: Optional[Meld] = None, tile: Optional[Tile] = None):
@@ -132,19 +135,25 @@ class Game:
         if not self.next_step:
             draw_tile = self.draw()
             if draw_tile is None:
-                return self.get_observation(), rewards, self.over, infos
+                return self.get_observations(), rewards, self.over, infos
             self.get_turn_player().draw(draw_tile)
             self.next_step = self.check_draw_next_step()
         infos = self.next_step[0]
 
-        observations = self.get_observation()
+        observations = self.get_observations()
 
         return observations, rewards, self.over, infos
 
-    def get_observation(self):
-        other = self.board.river.copy()
+    def get_observations(self) -> dict[str, ndarray[int, dtype[int]]]:
+        self_player = self.get_turn_player()
+        observation = self_player.hand.observation()
         for player in self.players:
-            for declarartion in player.declaration:
-                other.extend(declarartion)
-        player = self.get_turn_player()
-        return [player.hand.count(Tile(i)) for i in range(34)] + [other.count(Tile(i)) for i in range(34)]
+            if player.turn == self_player.turn:
+                continue
+            observation = np.concatenate((observation, player.declaration.observation()))
+        observation = np.concatenate((observation, self.board.river_observation()))
+        observations = {
+            "observation": observation,
+            "mask": self_player.hand.mask()
+        }
+        return observations

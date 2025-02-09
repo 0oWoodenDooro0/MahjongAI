@@ -1,6 +1,8 @@
 import random
 from typing import Optional
 
+import numpy as np
+
 from .tile import Tile
 
 
@@ -22,3 +24,10 @@ class Board:
 
     def get_last_discard_tile(self) -> Tile:
         return self.river.pop()
+
+    def river_observation(self):
+        mask = np.asarray([self.river.count(Tile(i)) for i in range(34)])
+        observation = []
+        for i in range(4):
+            observation.append(np.where(mask > i, 1, 0))
+        return np.asarray(observation, dtype=np.int8)

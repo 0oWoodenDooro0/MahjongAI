@@ -24,7 +24,7 @@ class TestPlayer(TestCase):
         player.draw(Tile.C3)
         player.add_to_declaration(SequenceMeld((Tile.C1, Tile.C2, Tile.C3)))
         self.assertEqual(0, len(player.hand))
-        self.assertEqual((Tile.C1, Tile.C2, Tile.C3), player.declaration[0].tiles)
+        self.assertEqual((Tile.C1, Tile.C2, Tile.C3), player.declaration[0].melds)
 
     def test_chow(self):
         player = Player(0)
@@ -32,7 +32,7 @@ class TestPlayer(TestCase):
         player.draw(Tile.C3)
         player.chow(SequenceMeld((Tile.C1, Tile.C2, Tile.C3)), Tile.C2)
         self.assertEqual(0, len(player.hand))
-        self.assertEqual((Tile.C1, Tile.C2, Tile.C3), player.declaration[0].tiles)
+        self.assertEqual((Tile.C1, Tile.C2, Tile.C3), player.declaration[0].melds)
 
     def test_pong(self):
         player = Player(0)
@@ -40,7 +40,7 @@ class TestPlayer(TestCase):
         player.draw(Tile.C1)
         player.pong(TripletMeld((Tile.C1, Tile.C1, Tile.C1)), Tile.C1)
         self.assertEqual(0, len(player.hand))
-        self.assertEqual((Tile.C1, Tile.C1, Tile.C1), player.declaration[0].tiles)
+        self.assertEqual((Tile.C1, Tile.C1, Tile.C1), player.declaration[0].melds)
 
     def test_kong(self):
         player = Player(0)
@@ -49,7 +49,7 @@ class TestPlayer(TestCase):
         player.draw(Tile.C1)
         player.kong(QuadrupletMeld((Tile.C1, Tile.C1, Tile.C1, Tile.C1)), Tile.C1)
         self.assertEqual(0, len(player.hand))
-        self.assertEqual((Tile.C1, Tile.C1, Tile.C1, Tile.C1), player.declaration[0].tiles)
+        self.assertEqual((Tile.C1, Tile.C1, Tile.C1, Tile.C1), player.declaration[0].melds)
 
     def test_closed_kong(self):
         player = Player(0)
@@ -59,7 +59,7 @@ class TestPlayer(TestCase):
         player.draw(Tile.C1)
         player.closed_kong(QuadrupletMeld((Tile.C1, Tile.C1, Tile.C1, Tile.C1)))
         self.assertEqual(0, len(player.hand))
-        self.assertEqual((Tile.C1, Tile.C1, Tile.C1, Tile.C1), player.declaration[0].tiles)
+        self.assertEqual((Tile.C1, Tile.C1, Tile.C1, Tile.C1), player.declaration[0].melds)
 
     def test_add_kong(self):
         player = Player(0)
@@ -69,7 +69,7 @@ class TestPlayer(TestCase):
         player.draw(Tile.C1)
         player.add_kong(Tile.C1)
         self.assertEqual(0, len(player.hand))
-        self.assertEqual((Tile.C1, Tile.C1, Tile.C1, Tile.C1), player.declaration[0].tiles)
+        self.assertEqual((Tile.C1, Tile.C1, Tile.C1, Tile.C1), player.declaration[0].melds)
 
     def test_can_chow(self):
         player = Player(0)
