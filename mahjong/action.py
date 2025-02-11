@@ -9,4 +9,3 @@ class Action(Enum):
     CLOSEDKONG = auto()
     ADDKONG = auto()
     WIN = auto()
-    NOTHING = auto()

@@ -1,7 +1,6 @@
 import numpy as np
 from keras import layers, Model
-
-from env import MahjongEnv
+from env import mahjong_v0
 
 SEED = 42
 GAMMA = 0.99
@@ -36,22 +35,13 @@ def create_discard_model():
     return model
 
 
-discard_model = create_discard_model()
-discard_model.compile(optimizer="adam", loss="mse", metrics=["accuracy"])
-discard_model.summary()
+# discard_model = create_discard_model()
+# discard_model.compile(optimizer="adam", loss="mse", metrics=["accuracy"])
+# discard_model.summary()
 
-env = MahjongEnv(render_mode="human")
+env = mahjong_v0.parallel_env(render_mode="human")
 observations, infos = env.reset()
-while True:
-    agent = list(infos.keys())[0]
-    predict = None
-    if agent == "discard":
-        predict = np.argmax(discard_model.predict(observations["observation"].reshape((1, 20, 34)))[0])
-    else:
-        predict = env.action_space(agent).sample(None)
-    action = {agent: {"action": predict, "player": infos[agent]["player"], "tile": infos[agent]["tile"],
-                      "type": infos[agent].get("type", None)}}
-    observations, rewards, terminations, trucations, infos = env.step(action)
-    if terminations:
-        break
+while env.agents:
+    actions = {agent: env.action_space(agent).sample(observations[agent]["action_mask"]) for agent in env.agents}
+    observations, rewards, terminations, truncations, infos = env.step(actions)
 env.close()
