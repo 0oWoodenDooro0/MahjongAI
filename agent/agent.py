@@ -1,5 +1,5 @@
-import numpy as np
 from keras import layers, Model
+
 from env import mahjong_v0
 
 SEED = 42

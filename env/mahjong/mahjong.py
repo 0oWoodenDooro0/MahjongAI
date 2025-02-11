@@ -1,17 +1,17 @@
 import functools
 
 from gymnasium import logger
-from gymnasium.spaces import MultiBinary, Discrete, MultiDiscrete
-from pettingzoo import ParallelEnv
+from gymnasium.spaces import Discrete, MultiDiscrete
+from pettingzoo.utils.env import ParallelEnv
 
 from mahjong import Game
 
 
 def parallel_env(render_mode=None):
-    return MahjongEnv(render_mode=render_mode)
+    return MahjongParallelEnv(render_mode=render_mode)
 
 
-class MahjongEnv(ParallelEnv):
+class MahjongParallelEnv(ParallelEnv):
     metadata = {"render_mode": ["human"], "name": "majhong_env_v0"}
 
     def __init__(self, render_mode=None):
@@ -63,7 +63,7 @@ class MahjongEnv(ParallelEnv):
 
     def step(self, actions):
         if not actions:
-            return None
+            return {}, {}, {}, {}, {}
 
         agent = list(actions.keys())[0]
         observations, rewards, terminations, infos = self.game.step(actions[agent])
