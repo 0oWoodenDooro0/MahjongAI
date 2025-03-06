@@ -1,4 +1,5 @@
 import functools
+from typing import Dict
 
 from gymnasium import logger
 from gymnasium.spaces import Discrete, MultiDiscrete
@@ -58,6 +59,8 @@ class MahjongParallelEnv(ParallelEnv):
         self.num_moves = 0
         observations, infos = self.game.init_game()
         self.state = observations
+        if self.render_mode == "human":
+            self.render()
 
         return observations, infos
 
@@ -75,3 +78,12 @@ class MahjongParallelEnv(ParallelEnv):
         if self.render_mode == "human":
             self.render()
         return observations, rewards, terminations, {agent: False for agent in self.agents}, infos
+
+    def _get_observation(self):
+        pass
+
+    def _get_reward(self):
+        pass
+
+    def _get_info(self):
+        pass

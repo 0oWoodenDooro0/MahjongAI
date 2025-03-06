@@ -224,20 +224,3 @@ class TestPlayer(TestCase):
         self.assertTrue(Player.check_is_win(
             [Tile.C1, Tile.C1, Tile.C1, Tile.C2, Tile.C2, Tile.C2, Tile.C6, Tile.C7, Tile.C7, Tile.C7, Tile.C7, Tile.C8,
              Tile.C9, Tile.C9]))
-
-    def test_check_listen_count(self):
-        player = Player(0)
-        player.hand = Hand(
-            [Tile.C2, Tile.C2, Tile.C3, Tile.C6, Tile.C7, Tile.B1, Tile.B3, Tile.B8, Tile.B9, Tile.D3, Tile.D7, Tile.D8,
-             Tile.W2, Tile.Dragon1, Tile.Dragon1, Tile.Dragon1])
-        self.assertEqual(player.check_listen_count(), 3)
-        player.hand = Hand(
-            [Tile.C1, Tile.C2, Tile.C3, Tile.C5, Tile.C6, Tile.C8, Tile.C9, Tile.B2, Tile.B3, Tile.B5, Tile.B6, Tile.B8,
-             Tile.B9, Tile.D1, Tile.D2, Tile.D3])
-        self.assertEqual(player.check_listen_count(), 3)
-        player.hand = Hand(
-            [Tile.C1, Tile.C2, Tile.C3, Tile.C5, Tile.C6, Tile.C8, Tile.C9, Tile.B2, Tile.B3, Tile.B5, Tile.B6, Tile.B9,
-             Tile.B9, Tile.D1, Tile.D2, Tile.D3])
-        self.assertEqual(player.check_listen_count(), 2)
-        player.hand = Hand([Tile.D3, Tile.D3, Tile.D3, Tile.C7, Tile.C7, Tile.C8, Tile.C8, Tile.D9, Tile.B1, Tile.B2])
-        self.assertEqual(player.check_listen_count(), 1)

@@ -38,4 +38,22 @@ class TestHand(TestCase):
         observation = hand.observation()
         np.testing.assert_equal(np.asarray([np.asarray(
             [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
-                                            np.zeros(34), np.zeros(34), np.zeros(34)]), observation)
+            np.zeros(34), np.zeros(34), np.zeros(34)]), observation)
+
+    def test_check_listen_count(self):
+        hand = Hand(
+            [Tile.C2, Tile.C2, Tile.C3, Tile.C6, Tile.C7, Tile.B1, Tile.B3, Tile.B8, Tile.B9, Tile.D3, Tile.D7, Tile.D8,
+             Tile.W2, Tile.Dragon1, Tile.Dragon1, Tile.Dragon1])
+        self.assertEqual(hand.check_listen_count(), 3)
+        hand = Hand(
+            [Tile.C1, Tile.C2, Tile.C3, Tile.C5, Tile.C6, Tile.C8, Tile.C9, Tile.B2, Tile.B3, Tile.B5, Tile.B6, Tile.B8,
+             Tile.B9, Tile.D1, Tile.D2, Tile.D3])
+        self.assertEqual(hand.check_listen_count(), 3)
+        hand = Hand(
+            [Tile.C1, Tile.C2, Tile.C3, Tile.C5, Tile.C6, Tile.C8, Tile.C9, Tile.B2, Tile.B3, Tile.B5, Tile.B6, Tile.B9,
+             Tile.B9, Tile.D1, Tile.D2, Tile.D3])
+        self.assertEqual(hand.check_listen_count(), 2)
+        hand = Hand([Tile.D3, Tile.D3, Tile.D3, Tile.C7, Tile.C7, Tile.C8, Tile.C8, Tile.D9, Tile.B1, Tile.B2])
+        self.assertEqual(hand.check_listen_count(), 1)
+        hand = Hand([Tile.C1, Tile.D3, Tile.D3, Tile.C7, Tile.C7, Tile.C8, Tile.C8, Tile.D9, Tile.B1, Tile.B2])
+        self.assertEqual(hand.check_listen_count(), 1)
