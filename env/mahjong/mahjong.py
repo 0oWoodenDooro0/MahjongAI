@@ -1,11 +1,14 @@
 import functools
-from typing import Dict
+from typing import Dict, Any
 
+import numpy as np
 from gymnasium import logger
 from gymnasium.spaces import Discrete, MultiDiscrete
+from numpy import ndarray, dtype
 from pettingzoo.utils.env import ParallelEnv
 
-from mahjong import Game
+import copy
+from mahjong import Game, Action
 
 
 def parallel_env(render_mode=None):
@@ -17,7 +20,9 @@ class MahjongParallelEnv(ParallelEnv):
 
     def __init__(self, render_mode=None):
         self.possible_agents = ["discard", "chow", "pong", "kong", "win"]
-        self.agent_name_mapping = dict(zip(self.possible_agents, list(range(len(self.possible_agents)))))
+        self.agent_name_mapping = dict(
+            zip(self.possible_agents, list(range(len(self.possible_agents))))
+        )
         self.render_mode = render_mode
         self.game = Game()
 
@@ -28,7 +33,7 @@ class MahjongParallelEnv(ParallelEnv):
             "chow": MultiDiscrete([20, 34]),
             "pong": MultiDiscrete([20, 34]),
             "kong": MultiDiscrete([20, 34]),
-            "win": MultiDiscrete([20, 34])
+            "win": MultiDiscrete([20, 34]),
         }
         return observation_spaces[agent]
 
@@ -39,7 +44,7 @@ class MahjongParallelEnv(ParallelEnv):
             "chow": Discrete(2),
             "pong": Discrete(2),
             "kong": Discrete(2),
-            "win": Discrete(2)
+            "win": Discrete(2),
         }
         return action_spaces[agent]
 
@@ -56,9 +61,9 @@ class MahjongParallelEnv(ParallelEnv):
     def reset(self, seed=None, options=None):
         self.agents = ["discard"]
         self.game = Game()
-        self.num_moves = 0
-        observations, infos = self.game.init_game()
-        self.state = observations
+        self.game.init_game()
+        observations = self._get_observation("discard")
+        infos = self._get_info("discard")
         if self.render_mode == "human":
             self.render()
 
@@ -69,7 +74,11 @@ class MahjongParallelEnv(ParallelEnv):
             return {}, {}, {}, {}, {}
 
         agent = list(actions.keys())[0]
-        observations, rewards, terminations, infos = self.game.step(actions[agent])
+        self.game.step(actions[agent])
+        observations = self._get_observation(agent)
+        rewards = self._get_reward(agent)
+        terminations = self._get_termination(agent)
+        infos = self._get_info(agent)
         if len(list(observations.keys())) == 0:
             self.agents = []
         else:
@@ -77,13 +86,52 @@ class MahjongParallelEnv(ParallelEnv):
 
         if self.render_mode == "human":
             self.render()
-        return observations, rewards, terminations, {agent: False for agent in self.agents}, infos
+        return (
+            observations,
+            rewards,
+            terminations,
+            {agent: False for agent in self.agents},
+            infos,
+        )
 
-    def _get_observation(self):
-        pass
+    def _get_observation(self, agent: str) -> dict[str, dict[str, ndarray[Any, dtype[Any]] | None]]:
+        if not self.game.next_step:
+            return {}
+        next_step = self.game.next_step[0]
+        agent = list(next_step.keys())[0]
+        next_action = next_step[agent]
+        action_type = next_action["type"]
+        self_player = self.game.players[next_action["player"]]
+        observation = self_player.hand.observation()
+        for player in self.game.players:
+            if player.turn == self_player.turn:
+                continue
+            observation = np.concatenate((observation, player.declaration.observation()))
+        observation = np.concatenate((observation, self.game.board.river_observation()))
+        observations = {agent: {"observation": observation,
+                                "action_mask": self_player.hand.mask() if action_type == Action.DISCARD else None}}
+        return observations
 
-    def _get_reward(self):
-        pass
+    def _get_reward(self, agent) -> Dict[Any, Any]:
+        if len(self.game.next_step) == 0:
+            return {}
+        next_step = self.game.next_step[0]
+        agent = list(next_step.keys())[0]
+        next_action = next_step[agent]
+        self_player = self.game.players[next_action["player"]]
+        rewards = {agent: self_player.hand.listen_count}
+        return rewards
 
-    def _get_info(self):
-        pass
+    def _get_info(self, agent) -> Dict[Any, Any]:
+        if len(self.game.next_step) == 0:
+            return {}
+        next_step = self.game.next_step[0]
+        agent = list(next_step.keys())[0]
+        next_action = next_step[agent]
+        self_player = self.game.players[next_action["player"]]
+        return {agent: {
+            "hand": copy.deepcopy(self_player.hand)
+        }}
+
+    def _get_termination(self, agent) -> Dict[Any, Any]:
+        return {agent: self.game.over}

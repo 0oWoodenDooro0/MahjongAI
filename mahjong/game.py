@@ -22,9 +22,6 @@ class Game:
         draw_tile = self.draw()
         self.get_turn_player().draw(draw_tile)
         self.next_step = self.check_draw_next_step()
-        infos = {"draw": draw_tile}
-        observations = self.get_observations()
-        return observations, infos
 
     def deal(self):
         for _ in range(16):
@@ -90,12 +87,10 @@ class Game:
         action_agent = list(next_step.keys())[0]
         next_action = next_step[action_agent]
         player = self.players[next_action["player"]]
-        infos = {}
         match next_action["type"]:
             case Action.DISCARD:
                 discard_tile = Tile(action)
                 player.discard(discard_tile)
-                infos[action_agent] = {"discard": next_action["tile"]}
                 self.board.discard_to_river(discard_tile)
                 self.next_step = self.check_discard_next_step(discard_tile)
                 self.turn_next()
@@ -105,7 +100,6 @@ class Game:
                 else:
                     self.turn = player.turn
                     player.chow(next_action["tile"], self.get_discard_tile())
-                    infos[action_agent] = {"chow": next_action["tile"]}
                     self.next_step = [{"discard": {"player": self.turn, "tile": None, "type": Action.DISCARD}}]
             case Action.PONG:
                 if action == 0 and self.next_step:
@@ -113,7 +107,6 @@ class Game:
                 else:
                     self.turn = player.turn
                     player.pong(next_action["tile"], self.get_discard_tile())
-                    infos[action_agent] = {"pong": next_action["tile"]}
                     self.next_step = [{"discard": {"player": self.turn, "tile": None, "type": Action.DISCARD}}]
             case Action.KONG:
                 if action == 0 and self.next_step:
@@ -121,45 +114,32 @@ class Game:
                 else:
                     self.turn = player.turn
                     player.kong(next_action["tile"], self.get_discard_tile())
-                    infos[action_agent] = {"kong": next_action["tile"]}
                     self.next_step = [{"discard": {"player": self.turn, "tile": None, "type": Action.DISCARD}}]
             case Action.CLOSEDKONG:
                 if action == 0 and self.next_step:
                     self.next_step.pop(0)
                 else:
                     player.closed_kong(next_action["tile"])
-                    infos[action_agent] = {"closed_kong": next_action["tile"]}
                     self.next_step = [{"discard": {"player": self.turn, "tile": None, "type": Action.DISCARD}}]
             case Action.ADDKONG:
                 if action == 0 and self.next_step:
                     self.next_step.pop(0)
                 else:
                     player.add_kong(next_action["tile"])
-                    infos[action_agent] = {"add_kong": next_action["tile"]}
                     self.next_step = [{"discard": {"player": self.turn, "tile": None, "type": Action.DISCARD}}]
             case Action.WIN:
                 if action == 0 and self.next_step:
                     self.next_step.pop(0)
                 else:
                     self.win()
-                    infos[action_agent] = "win"
-
-        rewards = {}
 
         if not self.next_step:
             draw_tile = self.draw()
             if draw_tile is None:
-                return {}, {}, {}, {}
+                self.over = True
+                return
             self.get_turn_player().draw(draw_tile)
-            infos[action_agent]["draw"] = draw_tile
             self.next_step = self.check_draw_next_step()
-        next_step = self.next_step[0]
-        action_agent = list(next_step.keys())[0]
-        infos = self.next_step[0]
-
-        observations = self.get_observations()
-
-        return observations, rewards, {action_agent: False}, infos
 
     def get_observations(self) -> dict[str, dict[str, ndarray[int, dtype[int]] | ndarray | None]]:
         next_step = self.next_step[0]
@@ -176,15 +156,3 @@ class Game:
         observations = {agent: {"observation": observation,
                                 "action_mask": self_player.hand.mask() if action_type == Action.DISCARD else None}}
         return observations
-
-    def get_rewards(self) -> dict[str, float]:
-        next_step = self.next_step[0]
-        agent = list(next_step.keys())[0]
-        next_action = next_step[agent]
-        self_player = self.players[next_action["player"]]
-        rewards = {agent: self_player.hand.listen_count}
-        return rewards
-
-    def get_infos(self) -> dict[str, dict[str, Any]]:
-        infos = {}
-        return infos

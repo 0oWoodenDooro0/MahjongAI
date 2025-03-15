@@ -1,0 +1,13 @@
+[project]
+name = "mahjongai"
+version = "0.1.0"
+description = "MahjongAI"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "gymnasium~=1.0.0",
+  "keras~=3.7.0",
+  "numpy~=2.0.2",
+  "pettingzoo~=1.24.3",
+  "tensorflow>=2.18.0",
+]
