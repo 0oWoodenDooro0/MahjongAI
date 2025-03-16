@@ -1,6 +1,6 @@
 from keras import Model, layers
 
-from algorithmAgent import AlgorithmAgent
+from algorithmAgent import AlgorithmAgent, Agent, RandomAgent
 from env import mahjong_v0
 
 SEED = 42
@@ -40,14 +40,18 @@ def create_discard_model():
 # discard_model.compile(optimizer="adam", loss="mse", metrics=["accuracy"])
 # discard_model.summary()
 
-algorithm_agent = AlgorithmAgent()
+def run_in_agent(_agent: Agent):
+    env = mahjong_v0.parallel_env(render_mode="human")
+    observations, infos = env.reset()
+    while env.agents:
+        actions = {
+            agent: _agent.action(agent=agent, action_space=env.action_space(agent),
+                                 observation_space=observations[agent], info=infos[agent])
+            for agent in env.agents
+        }
+        observations, rewards, terminations, truncations, infos = env.step(actions)
+    env.close()
 
-env = mahjong_v0.parallel_env(render_mode="human")
-observations, infos = env.reset()
-while env.agents:
-    actions = {
-        agent: algorithm_agent.action(agent, env.action_space(agent), observations[agent], infos[agent])
-        for agent in env.agents
-    }
-    observations, rewards, terminations, truncations, infos = env.step(actions)
-env.close()
+
+if __name__ == "__main__":
+    run_in_agent(AlgorithmAgent())

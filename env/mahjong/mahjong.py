@@ -1,4 +1,5 @@
 import functools
+from copy import deepcopy
 from typing import Dict, Any
 
 import numpy as np
@@ -19,12 +20,14 @@ class MahjongParallelEnv(ParallelEnv):
     metadata = {"render_mode": ["human"], "name": "majhong_env_v0"}
 
     def __init__(self, render_mode=None):
+        self.state = {}
         self.possible_agents = ["discard", "chow", "pong", "kong", "win"]
         self.agent_name_mapping = dict(
             zip(self.possible_agents, list(range(len(self.possible_agents))))
         )
         self.render_mode = render_mode
         self.game = Game()
+        self.state = self.game.state
 
     @functools.lru_cache(maxsize=None)
     def observation_space(self, agent):
@@ -54,6 +57,7 @@ class MahjongParallelEnv(ParallelEnv):
                 "You are calling render method without specifying any render mode."
             )
             return
+        print(self.state)
 
     def close(self):
         pass
@@ -64,6 +68,7 @@ class MahjongParallelEnv(ParallelEnv):
         self.game.init_game()
         observations = self._get_observation("discard")
         infos = self._get_info("discard")
+        self.state = self.game.state
         if self.render_mode == "human":
             self.render()
 
@@ -79,10 +84,12 @@ class MahjongParallelEnv(ParallelEnv):
         rewards = self._get_reward(agent)
         terminations = self._get_termination(agent)
         infos = self._get_info(agent)
-        if len(list(observations.keys())) == 0:
+        if len(list(observations.keys())) == 0 or terminations[agent]:
             self.agents = []
         else:
             self.agents = [list(observations.keys())[0]]
+
+        self.state = self.game.state
 
         if self.render_mode == "human":
             self.render()
@@ -94,7 +101,7 @@ class MahjongParallelEnv(ParallelEnv):
             infos,
         )
 
-    def _get_observation(self, agent: str) -> dict[str, dict[str, ndarray[Any, dtype[Any]] | None]]:
+    def _get_observation(self, agent: str) -> dict[str, Any]:
         if not self.game.next_step:
             return {}
         next_step = self.game.next_step[0]
@@ -112,7 +119,7 @@ class MahjongParallelEnv(ParallelEnv):
                                 "action_mask": self_player.hand.mask() if action_type == Action.DISCARD else None}}
         return observations
 
-    def _get_reward(self, agent) -> Dict[Any, Any]:
+    def _get_reward(self, agent: str) -> Dict[str, Any]:
         if len(self.game.next_step) == 0:
             return {}
         next_step = self.game.next_step[0]
@@ -122,16 +129,22 @@ class MahjongParallelEnv(ParallelEnv):
         rewards = {agent: self_player.hand.listen_count}
         return rewards
 
-    def _get_info(self, agent) -> Dict[Any, Any]:
+    def _get_info(self, agent: str) -> Dict[str, Any]:
         if len(self.game.next_step) == 0:
             return {}
         next_step = self.game.next_step[0]
         agent = list(next_step.keys())[0]
         next_action = next_step[agent]
         self_player = self.game.players[next_action["player"]]
+        dark_tiles = copy.deepcopy(self.game.board.wall)
+        for player in self.game.players:
+            if player.turn == self_player.turn:
+                continue
+            dark_tiles.extend(copy.deepcopy(player.hand.tiles))
         return {agent: {
-            "hand": copy.deepcopy(self_player.hand)
+            "hand": sorted(copy.deepcopy(self_player.hand.tiles)),
+            "dark": dark_tiles,
         }}
 
-    def _get_termination(self, agent) -> Dict[Any, Any]:
+    def _get_termination(self, agent: str) -> Dict[str, Any]:
         return {agent: self.game.over}

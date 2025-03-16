@@ -1,4 +1,5 @@
-from typing import Optional, Any
+import copy
+from typing import Optional, Dict, Any
 
 import numpy as np
 from numpy import ndarray, dtype
@@ -16,6 +17,8 @@ class Game:
         self.turn = 0
         self.over = False
         self.next_step = []
+        self.state: Dict[str, Any] = {"move_count": 0, "win": None, "draw": None, "player": None, "action": None,
+                                      "hand": None, "discard": None}
 
     def init_game(self):
         self.deal()
@@ -83,10 +86,14 @@ class Game:
         return next_step
 
     def step(self, action: int):
+        self.state["draw"] = None
+        self.state["discard"] = None
         next_step = self.next_step[0]
         action_agent = list(next_step.keys())[0]
         next_action = next_step[action_agent]
         player = self.players[next_action["player"]]
+        self.state["player"] = str(player)
+        self.state["action"] = next_action["type"]
         match next_action["type"]:
             case Action.DISCARD:
                 discard_tile = Tile(action)
@@ -94,6 +101,10 @@ class Game:
                 self.board.discard_to_river(discard_tile)
                 self.next_step = self.check_discard_next_step(discard_tile)
                 self.turn_next()
+                self.state["move_count"] += 1
+                self.state["discard"] = discard_tile
+                if len(self.get_turn_player().hand.tiles) not in [1, 4, 7, 10, 13, 16]:
+                    raise Exception("not right hand tiles")
             case Action.CHOW:
                 if action == 0 and self.next_step:
                     self.next_step.pop(0)
@@ -101,6 +112,7 @@ class Game:
                     self.turn = player.turn
                     player.chow(next_action["tile"], self.get_discard_tile())
                     self.next_step = [{"discard": {"player": self.turn, "tile": None, "type": Action.DISCARD}}]
+                    self.state["move_count"] += 1
             case Action.PONG:
                 if action == 0 and self.next_step:
                     self.next_step.pop(0)
@@ -108,51 +120,49 @@ class Game:
                     self.turn = player.turn
                     player.pong(next_action["tile"], self.get_discard_tile())
                     self.next_step = [{"discard": {"player": self.turn, "tile": None, "type": Action.DISCARD}}]
+                    self.state["move_count"] += 1
             case Action.KONG:
                 if action == 0 and self.next_step:
                     self.next_step.pop(0)
                 else:
                     self.turn = player.turn
                     player.kong(next_action["tile"], self.get_discard_tile())
+                    player.draw(self.board.wall.pop(0))
                     self.next_step = [{"discard": {"player": self.turn, "tile": None, "type": Action.DISCARD}}]
+                    self.state["move_count"] += 1
             case Action.CLOSEDKONG:
                 if action == 0 and self.next_step:
                     self.next_step.pop(0)
                 else:
                     player.closed_kong(next_action["tile"])
+                    player.draw(self.board.wall.pop(0))
                     self.next_step = [{"discard": {"player": self.turn, "tile": None, "type": Action.DISCARD}}]
+                    self.state["move_count"] += 1
             case Action.ADDKONG:
                 if action == 0 and self.next_step:
                     self.next_step.pop(0)
                 else:
                     player.add_kong(next_action["tile"])
+                    player.draw(self.board.wall.pop(0))
                     self.next_step = [{"discard": {"player": self.turn, "tile": None, "type": Action.DISCARD}}]
+                    self.state["move_count"] += 1
             case Action.WIN:
                 if action == 0 and self.next_step:
                     self.next_step.pop(0)
                 else:
                     self.win()
+                    self.state["move_count"] += 1
+                    self.state["win"] = True
+                if len(self.get_turn_player().hand.tiles) not in [1, 4, 7, 10, 13, 16]:
+                    raise Exception("not right hand tiles")
 
         if not self.next_step:
             draw_tile = self.draw()
+            self.state["draw"] = draw_tile
             if draw_tile is None:
                 self.over = True
                 return
             self.get_turn_player().draw(draw_tile)
             self.next_step = self.check_draw_next_step()
 
-    def get_observations(self) -> dict[str, dict[str, ndarray[int, dtype[int]] | ndarray | None]]:
-        next_step = self.next_step[0]
-        agent = list(next_step.keys())[0]
-        next_action = next_step[agent]
-        action_type = next_action["type"]
-        self_player = self.players[next_action["player"]]
-        observation = self_player.hand.observation()
-        for player in self.players:
-            if player.turn == self_player.turn:
-                continue
-            observation = np.concatenate((observation, player.declaration.observation()))
-        observation = np.concatenate((observation, self.board.river_observation()))
-        observations = {agent: {"observation": observation,
-                                "action_mask": self_player.hand.mask() if action_type == Action.DISCARD else None}}
-        return observations
+        self.state["hand"] = sorted(copy.deepcopy(self.get_turn_player().hand.tiles))
