@@ -150,10 +150,13 @@ class Game:
                 if action == 0 and self.next_step:
                     self.next_step.pop(0)
                 else:
+                    if len(self.get_turn_player().hand.tiles) in [1, 4, 7, 10, 13, 16]:
+                        self.get_turn_player().draw(self.get_discard_tile())
                     self.win()
                     self.state["move_count"] += 1
                     self.state["win"] = True
-                if len(self.get_turn_player().hand.tiles) not in [1, 4, 7, 10, 13, 16]:
+                if len(self.get_turn_player().hand.tiles) not in [2, 5, 8, 11, 14, 17]:
+                    print(self.get_turn_player().hand.tiles)
                     raise Exception("not right hand tiles")
 
         if not self.next_step:

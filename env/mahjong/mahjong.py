@@ -63,11 +63,13 @@ class MahjongParallelEnv(ParallelEnv):
         pass
 
     def reset(self, seed=None, options=None):
-        self.agents = ["discard"]
         self.game = Game()
         self.game.init_game()
-        observations = self._get_observation("discard")
-        infos = self._get_info("discard")
+        next_step = self.game.next_step[0]
+        agent = list(next_step.keys())[0]
+        observations = self._get_observation(agent)
+        infos = self._get_info(agent)
+        self.agents = [agent]
         self.state = self.game.state
         if self.render_mode == "human":
             self.render()
@@ -80,32 +82,31 @@ class MahjongParallelEnv(ParallelEnv):
 
         agent = list(actions.keys())[0]
         self.game.step(actions[agent])
-        observations = self._get_observation(agent)
-        rewards = self._get_reward(agent)
-        terminations = self._get_termination(agent)
-        infos = self._get_info(agent)
-        if len(list(observations.keys())) == 0 or terminations[agent]:
-            self.agents = []
-        else:
-            self.agents = [list(observations.keys())[0]]
-
         self.state = self.game.state
-
         if self.render_mode == "human":
             self.render()
-        return (
-            observations,
-            rewards,
-            terminations,
-            {agent: False for agent in self.agents},
-            infos,
-        )
+        if self.game.next_step:
+            next_step = self.game.next_step[0]
+            agent = list(next_step.keys())[0]
+            observations = self._get_observation(agent)
+            rewards = self._get_reward(agent)
+            terminations = self._get_termination(agent)
+            infos = self._get_info(agent)
+            if not terminations[agent]:
+                self.agents = [agent]
+                return (
+                    observations,
+                    rewards,
+                    terminations,
+                    {agent: False for agent in self.agents},
+                    infos,
+                )
+
+        self.agents = []
+        return {}, {}, {}, {}, {}
 
     def _get_observation(self, agent: str) -> dict[str, Any]:
-        if not self.game.next_step:
-            return {}
         next_step = self.game.next_step[0]
-        agent = list(next_step.keys())[0]
         next_action = next_step[agent]
         action_type = next_action["type"]
         self_player = self.game.players[next_action["player"]]
@@ -120,20 +121,14 @@ class MahjongParallelEnv(ParallelEnv):
         return observations
 
     def _get_reward(self, agent: str) -> Dict[str, Any]:
-        if len(self.game.next_step) == 0:
-            return {}
         next_step = self.game.next_step[0]
-        agent = list(next_step.keys())[0]
         next_action = next_step[agent]
         self_player = self.game.players[next_action["player"]]
         rewards = {agent: self_player.hand.listen_count}
         return rewards
 
     def _get_info(self, agent: str) -> Dict[str, Any]:
-        if len(self.game.next_step) == 0:
-            return {}
         next_step = self.game.next_step[0]
-        agent = list(next_step.keys())[0]
         next_action = next_step[agent]
         self_player = self.game.players[next_action["player"]]
         dark_tiles = copy.deepcopy(self.game.board.wall)

@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from keras import Model, layers
 
 from algorithmAgent import AlgorithmAgent, Agent, RandomAgent
@@ -40,8 +42,8 @@ def create_discard_model():
 # discard_model.compile(optimizer="adam", loss="mse", metrics=["accuracy"])
 # discard_model.summary()
 
-def run_in_agent(_agent: Agent):
-    env = mahjong_v0.parallel_env(render_mode="human")
+def run_in_agent(_agent: Agent, render_mode=None) -> Dict[str, Any]:
+    env = mahjong_v0.parallel_env(render_mode)
     observations, infos = env.reset()
     while env.agents:
         actions = {
@@ -50,8 +52,28 @@ def run_in_agent(_agent: Agent):
             for agent in env.agents
         }
         observations, rewards, terminations, truncations, infos = env.step(actions)
+    state = env.state
     env.close()
+    return state
+
+
+def average(l):
+    return sum(l) / len(l)
 
 
 if __name__ == "__main__":
-    run_in_agent(AlgorithmAgent())
+    times = 1000
+    win_times = 0
+    win_steps = []
+    none_win_steps = []
+    for i in range(times):
+        state = run_in_agent(AlgorithmAgent())
+        if state["win"]:
+            win_times += 1
+            win_steps.append(state["move_count"])
+        else:
+            none_win_steps.append(state["move_count"])
+
+    print(f"{win_times=}")
+    print(f"{average(win_steps)=}")
+    print(f"{average(none_win_steps)=}")
