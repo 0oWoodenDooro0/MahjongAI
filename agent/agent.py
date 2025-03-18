@@ -1,8 +1,10 @@
-from typing import Any, Dict
+import os
+from typing import Any, Dict, Tuple, SupportsIndex, Sequence
 
+import numpy as np
 from keras import Model, layers
 
-from algorithmAgent import AlgorithmAgent, Agent, RandomAgent
+from algorithmAgent import AlgorithmAgent, Agent
 from env import mahjong_v0
 
 SEED = 42
@@ -45,20 +47,41 @@ def create_discard_model():
 def run_in_agent(_agent: Agent, render_mode=None) -> Dict[str, Any]:
     env = mahjong_v0.parallel_env(render_mode)
     observations, infos = env.reset()
+    discard_input = []
+    discard_output = []
     while env.agents:
-        actions = {
+        action_predict = {
             agent: _agent.action(agent=agent, action_space=env.action_space(agent),
                                  observation_space=observations[agent], info=infos[agent])
             for agent in env.agents
         }
+        actions = {
+            agent: env.action_space(agent).sample(action_predict[agent])
+            for agent in env.agents
+        }
+        for agent in env.agents:
+            if agent == "discard":
+                discard_input.append(observations[agent]["observation"])
+                discard_output.append(action_predict[agent])
         observations, rewards, terminations, truncations, infos = env.step(actions)
     state = env.state
+    state["discard_input"] = discard_input
+    state["discard_output"] = discard_output
     env.close()
     return state
 
 
 def average(l):
+    if len(l) == 0:
+        return 0
     return sum(l) / len(l)
+
+
+def load_data(path: str, shape: SupportsIndex | Sequence[SupportsIndex]):
+    if os.path.exists(path=path):
+        return np.load(file=path)
+    else:
+        return np.empty(shape=shape)
 
 
 if __name__ == "__main__":
@@ -66,14 +89,22 @@ if __name__ == "__main__":
     win_times = 0
     win_steps = []
     none_win_steps = []
+    discard_input = load_data("../data/discard_input.npy", (0, 20, 34))
+    discard_output = load_data("../data/discard_output.npy", (0, 34))
     for i in range(times):
         state = run_in_agent(AlgorithmAgent())
+        discard_input = np.append(discard_input, state["discard_input"], axis=0)
+        discard_output = np.append(discard_output, state["discard_output"], axis=0)
         if state["win"]:
             win_times += 1
             win_steps.append(state["move_count"])
         else:
             none_win_steps.append(state["move_count"])
+    np.save("../data/discard_input.npy", discard_input)
+    np.save("../data/discard_output.npy", discard_output)
 
     print(f"{win_times=}")
     print(f"{average(win_steps)=}")
     print(f"{average(none_win_steps)=}")
+    print(discard_input.shape)
+    print(discard_output.shape)

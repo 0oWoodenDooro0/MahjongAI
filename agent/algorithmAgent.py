@@ -1,7 +1,8 @@
 import copy
 from abc import ABC
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Sequence
 
+import numpy as np
 from gymnasium.spaces import Discrete
 
 from mahjong import Hand, Tile
@@ -9,7 +10,7 @@ from mahjong import Hand, Tile
 
 class Agent(ABC):
     def action(self, agent: str, action_space: Discrete, observation_space: Dict[str, Any],
-               info: Dict[str, Hand | Any]):
+               info: Dict[str, Hand | Any]) -> Sequence:
         raise NotImplementedError()
 
 
@@ -55,9 +56,9 @@ class AlgorithmAgent(Agent):
     def action(self, agent: str, observation_space: Dict[str, Any], info: Dict[str, Hand | Any], **kwargs):
         if agent == "discard":
             return self.tile_score(info["hand"], info["dark"])
-        return 1
+        return np.array([0, 1], dtype=np.int8)
 
-    def tile_score(self, tiles: List[Tile], dark: List[Tile]) -> int:
+    def tile_score(self, tiles: List[Tile], dark: List[Tile]) -> Sequence[int]:
         parameter = [10, 5, 1]
         scale = 50
         scores = []
@@ -76,9 +77,11 @@ class AlgorithmAgent(Agent):
             scores.append(score)
 
         min_index = scores.index(min(scores))
-        return tiles[min_index]
+        result = np.zeros(34)
+        result[tiles[min_index]] = 1
+        return result.astype(np.int8)
 
 
 class RandomAgent(Agent):
     def action(self, observation_space: Dict[str, Any], action_space: Discrete, **kwargs):
-        return action_space.sample(observation_space['action_mask'])
+        return observation_space['action_mask']
