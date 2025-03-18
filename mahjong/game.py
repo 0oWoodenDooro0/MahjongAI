@@ -1,8 +1,11 @@
-from typing import Optional
+import copy
+from typing import Optional, Dict, Any
+
+import numpy as np
+from numpy import ndarray, dtype
 
 from .action import Action
 from .board import Board
-from .meld import SequenceMeld, TripletMeld, QuadrupletMeld, Meld
 from .player import Player
 from .tile import Tile
 
@@ -14,15 +17,14 @@ class Game:
         self.turn = 0
         self.over = False
         self.next_step = []
+        self.state: Dict[str, Any] = {"move_count": 0, "win": None, "draw": None, "player": None, "action": None,
+                                      "hand": None, "discard": None}
 
     def init_game(self):
         self.deal()
         draw_tile = self.draw()
         self.get_turn_player().draw(draw_tile)
         self.next_step = self.check_draw_next_step()
-        infos = self.next_step[0]
-        observations = self.get_observation()
-        return observations, infos
 
     def deal(self):
         for _ in range(16):
@@ -54,97 +56,116 @@ class Game:
             if player.turn == self.turn:
                 continue
             elif player.can_win(discard_tile):
-                next_step.append({"win": {"player": player.turn, "tile": None}})
+                next_step.append({"win": {"player": player.turn, "tile": None, "type": Action.WIN}})
         for player in self.players:
             if player.turn == self.turn:
                 continue
             if kong_tiles := player.can_kong(discard_tile):
-                next_step.append({"kong": {"player": player.turn, "tile": kong_tiles, "type": "kong"}})
+                next_step.append({"kong": {"player": player.turn, "tile": kong_tiles, "type": Action.KONG}})
             if pong_tiles := player.can_pong(discard_tile):
-                next_step.append({"pong": {"player": player.turn, "tile": pong_tiles}})
+                next_step.append({"pong": {"player": player.turn, "tile": pong_tiles, "type": Action.PONG}})
         for player in self.players:
             if player.turn == (self.turn + 1) % len(self.players):
                 if chow_tiles_list := player.can_chow(discard_tile):
                     for chow_tiles in chow_tiles_list:
-                        next_step.append({"chow": {"player": player.turn, "tile": chow_tiles}})
+                        next_step.append({"chow": {"player": player.turn, "tile": chow_tiles, "type": Action.CHOW}})
         return next_step
 
     def check_draw_next_step(self):
         next_step = []
         player = self.get_turn_player()
         if player.can_self_win():
-            next_step.append({"win": {"player": player.turn, "tile": None}})
+            next_step.append({"win": {"player": player.turn, "tile": None, "type": Action.WIN}})
         if add_kong_tile_list := player.can_add_kong():
             for add_kong_tile in add_kong_tile_list:
-                next_step.append({"kong": {"player": player.turn, "tile": add_kong_tile, "type": "add_kong"}})
+                next_step.append({"kong": {"player": player.turn, "tile": add_kong_tile, "type": Action.ADDKONG}})
         if closed_kong_tiles := player.can_closed_kong():
-            next_step.append({"kong": {"player": player.turn, "tile": closed_kong_tiles, "type": "closed_kong"}})
+            next_step.append({"kong": {"player": player.turn, "tile": closed_kong_tiles, "type": Action.CLOSEDKONG}})
         if not next_step:
-            next_step.append({"discard": {"player": player.turn, "tile": None, "mask": player.hand.mask()}})
+            next_step.append({"discard": {"player": player.turn, "tile": None, "type": Action.DISCARD}})
         return next_step
 
-    def step(self, action: Action, turn: int, tiles: Optional[Meld] = None, tile: Optional[Tile] = None):
-        player = self.players[turn]
-        rewards = {}
-        infos = {}
-        match action:
+    def step(self, action: int):
+        self.state["draw"] = None
+        self.state["discard"] = None
+        next_step = self.next_step[0]
+        action_agent = list(next_step.keys())[0]
+        next_action = next_step[action_agent]
+        player = self.players[next_action["player"]]
+        self.state["player"] = str(player)
+        self.state["action"] = next_action["type"]
+        match next_action["type"]:
             case Action.DISCARD:
-                if not isinstance(tile, Tile):
-                    raise AttributeError("not correct tile in discard")
-                player.discard(tile)
-                self.board.discard_to_river(tile)
-                self.next_step = self.check_discard_next_step(tile)
+                discard_tile = Tile(action)
+                player.discard(discard_tile)
+                self.board.discard_to_river(discard_tile)
+                self.next_step = self.check_discard_next_step(discard_tile)
                 self.turn_next()
+                self.state["move_count"] += 1
+                self.state["discard"] = discard_tile
+                if len(self.get_turn_player().hand.tiles) not in [1, 4, 7, 10, 13, 16]:
+                    raise Exception("not right hand tiles")
             case Action.CHOW:
-                self.turn = player.turn
-                if not isinstance(tiles, SequenceMeld):
-                    raise AttributeError(tiles, "not correct tile in chow")
-                player.chow(tiles, self.get_discard_tile())
-                self.next_step = [{"discard": {"player": self.turn, "tile": None, "mask": player.hand.mask()}}]
-            case Action.PONG:
-                self.turn = player.turn
-                if not isinstance(tiles, TripletMeld):
-                    raise AttributeError(tiles, "not correct meld pong")
-                player.pong(tiles, self.get_discard_tile())
-                self.next_step = [{"discard": {"player": self.turn, "tile": None, "mask": player.hand.mask()}}]
-            case Action.KONG:
-                self.turn = player.turn
-                if not isinstance(tiles, QuadrupletMeld):
-                    raise AttributeError(tiles, "not correct meld in kong")
-                player.kong(tiles, self.get_discard_tile())
-                self.next_step = [{"discard": {"player": self.turn, "tile": None, "mask": player.hand.mask()}}]
-            case Action.CLOSEDKONG:
-                if not isinstance(tiles, QuadrupletMeld):
-                    raise AttributeError(tiles, "not correct meld in closed kong")
-                player.closed_kong(tiles)
-                self.next_step = [{"discard": {"player": self.turn, "tile": None, "mask": player.hand.mask()}}]
-            case Action.ADDKONG:
-                if not isinstance(tile, Tile):
-                    raise AttributeError(tile, "not correct tile in add kong")
-                player.add_kong(tile)
-                self.next_step = [{"discard": {"player": self.turn, "tile": None, "mask": player.hand.mask()}}]
-            case Action.WIN:
-                self.win()
-            case Action.NOTHING:
-                if self.next_step:
+                if action == 0 and self.next_step:
                     self.next_step.pop(0)
+                else:
+                    self.turn = player.turn
+                    player.chow(next_action["tile"], self.get_discard_tile())
+                    self.next_step = [{"discard": {"player": self.turn, "tile": None, "type": Action.DISCARD}}]
+                    self.state["move_count"] += 1
+            case Action.PONG:
+                if action == 0 and self.next_step:
+                    self.next_step.pop(0)
+                else:
+                    self.turn = player.turn
+                    player.pong(next_action["tile"], self.get_discard_tile())
+                    self.next_step = [{"discard": {"player": self.turn, "tile": None, "type": Action.DISCARD}}]
+                    self.state["move_count"] += 1
+            case Action.KONG:
+                if action == 0 and self.next_step:
+                    self.next_step.pop(0)
+                else:
+                    self.turn = player.turn
+                    player.kong(next_action["tile"], self.get_discard_tile())
+                    player.draw(self.board.wall.pop(0))
+                    self.next_step = [{"discard": {"player": self.turn, "tile": None, "type": Action.DISCARD}}]
+                    self.state["move_count"] += 1
+            case Action.CLOSEDKONG:
+                if action == 0 and self.next_step:
+                    self.next_step.pop(0)
+                else:
+                    player.closed_kong(next_action["tile"])
+                    player.draw(self.board.wall.pop(0))
+                    self.next_step = [{"discard": {"player": self.turn, "tile": None, "type": Action.DISCARD}}]
+                    self.state["move_count"] += 1
+            case Action.ADDKONG:
+                if action == 0 and self.next_step:
+                    self.next_step.pop(0)
+                else:
+                    player.add_kong(next_action["tile"])
+                    player.draw(self.board.wall.pop(0))
+                    self.next_step = [{"discard": {"player": self.turn, "tile": None, "type": Action.DISCARD}}]
+                    self.state["move_count"] += 1
+            case Action.WIN:
+                if action == 0 and self.next_step:
+                    self.next_step.pop(0)
+                else:
+                    if len(self.get_turn_player().hand.tiles) in [1, 4, 7, 10, 13, 16]:
+                        self.get_turn_player().draw(self.get_discard_tile())
+                    self.win()
+                    self.state["move_count"] += 1
+                    self.state["win"] = True
+                if len(self.get_turn_player().hand.tiles) not in [2, 5, 8, 11, 14, 17]:
+                    print(self.get_turn_player().hand.tiles)
+                    raise Exception("not right hand tiles")
 
         if not self.next_step:
             draw_tile = self.draw()
+            self.state["draw"] = draw_tile
             if draw_tile is None:
-                return self.get_observation(), rewards, self.over, infos
+                self.over = True
+                return
             self.get_turn_player().draw(draw_tile)
             self.next_step = self.check_draw_next_step()
-        infos = self.next_step[0]
 
-        observations = self.get_observation()
-
-        return observations, rewards, self.over, infos
-
-    def get_observation(self):
-        other = self.board.river.copy()
-        for player in self.players:
-            for declarartion in player.declaration:
-                other.extend(declarartion)
-        player = self.get_turn_player()
-        return [player.hand.count(Tile(i)) for i in range(34)] + [other.count(Tile(i)) for i in range(34)]
+        self.state["hand"] = sorted(copy.deepcopy(self.get_turn_player().hand.tiles))

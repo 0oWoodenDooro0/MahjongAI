@@ -1,5 +1,7 @@
 from unittest import TestCase
 
+import numpy as np
+
 from mahjong import Board, Tile
 
 
@@ -22,3 +24,10 @@ class TestBoard(TestCase):
         board.discard_to_river(Tile.B1)
         self.assertEqual(board.get_last_discard_tile(), Tile.B1)
         self.assertEqual(len(board.river), 0)
+
+    def test_river_observation(self):
+        board = Board()
+        board.discard_to_river(Tile.C1)
+        np.testing.assert_equal(np.asarray([np.asarray(
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+                                            np.zeros(34), np.zeros(34), np.zeros(34)]), board.river_observation())
