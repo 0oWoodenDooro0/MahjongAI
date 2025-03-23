@@ -1,9 +1,6 @@
 import copy
 from typing import Optional, Dict, Any
 
-import numpy as np
-from numpy import ndarray, dtype
-
 from .action import Action
 from .board import Board
 from .player import Player
@@ -155,9 +152,9 @@ class Game:
                     self.win()
                     self.state["move_count"] += 1
                     self.state["win"] = True
-                if len(self.get_turn_player().hand.tiles) not in [2, 5, 8, 11, 14, 17]:
-                    print(self.get_turn_player().hand.tiles)
-                    raise Exception("not right hand tiles")
+                    if len(self.get_turn_player().hand.tiles) not in [2, 5, 8, 11, 14, 17]:
+                        print(sorted(self.get_turn_player().hand.tiles))
+                        raise Exception("not right hand tiles")
 
         if not self.next_step:
             draw_tile = self.draw()

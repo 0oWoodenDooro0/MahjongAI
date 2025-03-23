@@ -1,15 +1,16 @@
-import copy
 from abc import ABC
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Sequence
 
+import numpy as np
 from gymnasium.spaces import Discrete
+from keras import saving
 
 from mahjong import Hand, Tile
 
 
 class Agent(ABC):
     def action(self, agent: str, action_space: Discrete, observation_space: Dict[str, Any],
-               info: Dict[str, Hand | Any]):
+               info: Dict[str, Hand | Any]) -> Sequence:
         raise NotImplementedError()
 
 
@@ -55,9 +56,9 @@ class AlgorithmAgent(Agent):
     def action(self, agent: str, observation_space: Dict[str, Any], info: Dict[str, Hand | Any], **kwargs):
         if agent == "discard":
             return self.tile_score(info["hand"], info["dark"])
-        return 1
+        return np.array([0, 1], dtype=np.int8)
 
-    def tile_score(self, tiles: List[Tile], dark: List[Tile]) -> int:
+    def tile_score(self, tiles: List[Tile], dark: List[Tile]) -> Sequence[int]:
         parameter = [10, 5, 1]
         scale = 50
         scores = []
@@ -76,9 +77,29 @@ class AlgorithmAgent(Agent):
             scores.append(score)
 
         min_index = scores.index(min(scores))
-        return tiles[min_index]
+        result = np.zeros(34)
+        result[tiles[min_index]] = 1
+        return result.astype(np.int8)
 
 
 class RandomAgent(Agent):
     def action(self, observation_space: Dict[str, Any], action_space: Discrete, **kwargs):
-        return action_space.sample(observation_space['action_mask'])
+        return observation_space['action_mask']
+
+
+class ModelAgent(Agent):
+    def __init__(self, discard_path: str):
+        self.discard_model = saving.load_model(discard_path)
+
+    def action(self, agent: str, observation_space: Dict[str, Any], **kwargs):
+        if agent == "discard":
+            predict = self.discard_model.predict(observation_space["observation"].reshape((1, 20, 34)),
+                                                 verbose=0).reshape(34)
+            predict = np.multiply(predict, observation_space["observation"][:][0][:])
+            max_index = np.argmax(predict, axis=-1)
+            predict = np.eye(predict.shape[-1], dtype=np.int8)[max_index]
+            if not np.any(predict):
+                print("random step")
+                return observation_space['action_mask']
+            return predict
+        return np.array([0, 1], dtype=np.int8)
