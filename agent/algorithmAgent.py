@@ -1,9 +1,9 @@
-import copy
 from abc import ABC
 from typing import Dict, Any, List, Sequence
 
 import numpy as np
 from gymnasium.spaces import Discrete
+from keras import saving
 
 from mahjong import Hand, Tile
 
@@ -85,3 +85,21 @@ class AlgorithmAgent(Agent):
 class RandomAgent(Agent):
     def action(self, observation_space: Dict[str, Any], action_space: Discrete, **kwargs):
         return observation_space['action_mask']
+
+
+class ModelAgent(Agent):
+    def __init__(self, discard_path: str):
+        self.discard_model = saving.load_model(discard_path)
+
+    def action(self, agent: str, observation_space: Dict[str, Any], **kwargs):
+        if agent == "discard":
+            predict = self.discard_model.predict(observation_space["observation"].reshape((1, 20, 34)),
+                                                 verbose=0).reshape(34)
+            predict = np.multiply(predict, observation_space["observation"][:][0][:])
+            max_index = np.argmax(predict, axis=-1)
+            predict = np.eye(predict.shape[-1], dtype=np.int8)[max_index]
+            if not np.any(predict):
+                print("random step")
+                return observation_space['action_mask']
+            return predict
+        return np.array([0, 1], dtype=np.int8)
