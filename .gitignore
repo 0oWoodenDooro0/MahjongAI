@@ -5,3 +5,4 @@ htmlcov
 .vscode
 .venv
 /data/
+/.run/

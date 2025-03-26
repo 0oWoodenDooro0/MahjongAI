@@ -5,7 +5,7 @@ import numpy as np
 from keras import Model, layers, optimizers, saving, losses, callbacks, metrics
 from tensorflow.data import Dataset
 
-from algorithmAgent import Agent, AlgorithmAgent, ModelAgent
+from algorithmAgent import Agent, ModelAgent
 from env import mahjong_v0
 
 SEED = 42
@@ -130,7 +130,7 @@ def run_agent_in_times(agent: Agent, times=1000):
     print(f"{average(none_win_steps)=}")
 
 
-def train(data_path, labels_path, lr=0.001, epochs=1, batch_size=None):
+def train(data_path, labels_path, model_path, lr=0.001, epochs=1, batch_size=None):
     discard_input_data = load_np_data(data_path, (0, 20, 34))
     discard_output_data = load_np_data(labels_path, (0, 34))
 
@@ -143,17 +143,19 @@ def train(data_path, labels_path, lr=0.001, epochs=1, batch_size=None):
 
     tensorboard_callback = callbacks.TensorBoard(log_dir="../data/logs")
 
-    discard_model = load_model("../data/discard_model.keras")
+    discard_model = load_model(model_path)
     # learning_rate_schedule = optimizers.schedules.CosineDecay(initial_learning_rate=lr, decay_steps=1000,
     #                                                           warmup_steps=1000, warmup_target=lr)
     optimizer = optimizers.Adam(learning_rate=lr)
     discard_model.compile(optimizer=optimizer, loss=losses.CategoricalCrossentropy(),
                           metrics=[metrics.CategoricalAccuracy()])
-    early_stopping = callbacks.EarlyStopping(monitor="val_categorical_accuracy", mode="max", patience=10, restore_best_weights=True)
-    reduce_lr = callbacks.ReduceLROnPlateau(monitor="val_categorical_accuracy", mode="max", factor=0.1, patience=5, min_lr=1e-6)
+    early_stopping = callbacks.EarlyStopping(monitor="val_categorical_accuracy", mode="max", patience=10,
+                                             restore_best_weights=True)
+    reduce_lr = callbacks.ReduceLROnPlateau(monitor="val_categorical_accuracy", mode="max", factor=0.1, patience=5,
+                                            min_lr=1e-6)
     discard_model.fit(train_discard_dataset, epochs=epochs, validation_data=validation_discard_dataset,
                       callbacks=[tensorboard_callback, early_stopping, reduce_lr])
-    discard_model.save("../data/discard_model.keras")
+    discard_model.save(model_path)
     loss, accuracy = discard_model.evaluate(test_discard_dataset)
     print(f"{loss=}")
     print(f"{accuracy=}")
@@ -183,10 +185,25 @@ def get_train_data_info(discard_output_data):
     print(len(discard_output_data))
 
 
+def test_data(data_path, labels_path, model_path, batch_size=32):
+    discard_input_data = load_np_data(data_path, (0, 20, 34))
+    discard_output_data = load_np_data(labels_path, (0, 34))
+    train_discard_dataset, validation_discard_dataset, test_discard_dataset = split_data(discard_input_data,
+                                                                                         discard_output_data)
+
+    test_discard_dataset = test_discard_dataset.shuffle(buffer_size=1024).batch(batch_size)
+    discard_model = load_model(model_path)
+    loss, accuracy = discard_model.evaluate(test_discard_dataset)
+    print(f"{loss=}")
+    print(f"{accuracy=}")
+
+
 if __name__ == "__main__":
     # make_train_data(AlgorithmAgent(), data_path="../data/discard_data1.npy", labels_path="../data/discard_labels1.npy",
     #                 times=2000)
-    # train(data_path="../data/discard_data1.npy", labels_path="../data/discard_labels1.npy", lr=0.01, epochs=64,
-    #       batch_size=32)
-    run_agent_in_times(ModelAgent(discard_path="../data/discard_model.keras"), times=100)
+    # train(data_path="../data/discard_data1.npy", labels_path="../data/discard_labels1.npy",
+    #       model_path="../data/discard_model.keras", lr=0.01, epochs=64, batch_size=32)
+    # run_agent_in_times(ModelAgent(discard_path="../data/discard_model.keras"), times=100)
     # get_train_data_info(load_np_data("../data/discard_output.npy", (0, 34)))
+    test_data(data_path="../data/discard_data1.npy", labels_path="../data/discard_labels1.npy",
+              model_path="../data/discard_model.keras")
