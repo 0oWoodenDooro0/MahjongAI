@@ -21,6 +21,12 @@ class Meld(ABC):
     def __next__(self):
         return next(self.__iter__())
 
+    def __str__(self):
+        return str(self.tiles)
+
+    def __repr__(self):
+        return str(self.tiles)
+
 
 class TripletMeld(Meld):
     def __init__(self, tiles: Tuple[Tile, Tile, Tile]):

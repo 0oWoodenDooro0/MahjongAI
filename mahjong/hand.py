@@ -1,8 +1,10 @@
+from copy import deepcopy
 from typing import List
 from collections import Counter
 
 import numpy as np
 
+from .meld import Meld
 from .tile import Tile
 
 
@@ -24,6 +26,17 @@ class Hand:
     def mask(self) -> np.ndarray:
         data = [int(self.tiles.count(Tile(i)) > 0) for i in range(34)]
         return np.asarray(data, dtype=np.int8)
+
+    def claim_observation(self, meld: Meld) -> np.ndarray:
+        tiles = deepcopy(self.tiles)
+        for tile in meld:
+            if tile in tiles:
+                tiles.remove(tile)
+        mask = np.asarray([tiles.count(Tile(i)) for i in range(34)])
+        observation = []
+        for i in range(4):
+            observation.append(np.where(mask > i, 1, 0))
+        return np.asarray(observation, dtype=np.int8)
 
     def observation(self) -> np.ndarray:
         mask = np.asarray([self.tiles.count(Tile(i)) for i in range(34)])

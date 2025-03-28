@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import numpy as np
 
-from mahjong import Player, Tile, Hand
+from mahjong import Player, Tile, Hand, SequenceMeld
 
 
 class TestHand(TestCase):
@@ -30,6 +30,11 @@ class TestHand(TestCase):
                 self.assertEqual(1, mask[i])
             else:
                 self.assertEqual(0, mask[i])
+
+    def test_claim_observation(self):
+        meld = SequenceMeld((Tile(1), Tile(2), Tile(3)))
+        hand = Hand([Tile(1), Tile(2), Tile(3), Tile(4)])
+        self.assertEqual([Tile(4)], hand.claim_observation(meld))
 
     def test_observation(self):
         hand = Hand()

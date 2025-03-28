@@ -5,7 +5,8 @@ import numpy as np
 from keras import Model, layers, optimizers, saving, losses, callbacks, metrics
 from tensorflow.data import Dataset
 
-from algorithmAgent import Agent, ModelAgent
+from algorithmAgent import Agent, ModelAgent, RandomAgent
+from algorithmAgent import AlgorithmAgent
 from env import mahjong_v0
 
 SEED = 42
@@ -53,8 +54,16 @@ def load_model(path: str):
 def run_in_agent(_agent: Agent, render_mode=None) -> Dict[str, Any]:
     env = mahjong_v0.parallel_env(render_mode)
     observations, infos = env.reset()
-    discard_input = []
-    discard_output = []
+    data = {}
+    labels = {}
+    data["discard"] = np.empty((0, 20, 34))
+    labels["discard"] = np.empty((0, 34))
+    data["chow"] = np.empty((0, 8, 34))
+    labels["chow"] = np.empty((0, 2))
+    data["pong"] = np.empty((0, 8, 34))
+    labels["pong"] = np.empty((0, 2))
+    data["kong"] = np.empty((0, 8, 34))
+    labels["kong"] = np.empty((0, 2))
     while env.agents:
         action_predict = {
             agent: _agent.action(agent=agent, action_space=env.action_space(agent),
@@ -66,13 +75,15 @@ def run_in_agent(_agent: Agent, render_mode=None) -> Dict[str, Any]:
             for agent in env.agents
         }
         for agent in env.agents:
-            if agent == "discard":
-                discard_input.append(observations[agent]["observation"])
-                discard_output.append(action_predict[agent])
+            if agent != "win":
+                shape = observations[agent]["observation"].shape
+                data[agent] = np.append(data[agent], observations[agent]["observation"].reshape((1, shape[0], shape[1])), axis=0)
+                shape = action_predict[agent].shape
+                labels[agent] = np.append(labels[agent], action_predict[agent].reshape((1, shape[0])), axis=0)
         observations, rewards, terminations, truncations, infos = env.step(actions)
     state = env.state
-    state["discard_input"] = discard_input
-    state["discard_output"] = discard_output
+    state["data"] = data
+    state["labels"] = labels
     env.close()
     return state
 
@@ -96,30 +107,53 @@ def make_train_data(agent: Agent, data_path: str, labels_path: str, times=1):
     none_win_steps = []
     discard_data = np.empty((0, 20, 34))
     discard_labels = np.empty((0, 34))
+    chow_data = np.empty((0, 8, 34))
+    chow_labels = np.empty((0, 2))
+    pong_data = np.empty((0, 8, 34))
+    pong_labels = np.empty((0, 2))
+    kong_data = np.empty((0, 8, 34))
+    kong_labels = np.empty((0, 2))
     for i in range(times):
         state = run_in_agent(agent)
-        discard_data = np.append(discard_data, state["discard_input"], axis=0)
-        discard_labels = np.append(discard_labels, state["discard_output"], axis=0)
+        data = state["data"]
+        labels = state["labels"]
+        discard_data = np.append(discard_data, data["discard"], axis=0)
+        discard_labels = np.append(discard_labels, labels["discard"], axis=0)
+        chow_data = np.append(chow_data, data["chow"], axis=0)
+        chow_labels = np.append(chow_labels, labels["chow"], axis=0)
+        pong_data = np.append(pong_data, data["pong"], axis=0)
+        pong_labels = np.append(pong_labels, labels["pong"], axis=0)
+        kong_data = np.append(kong_data, data["kong"], axis=0)
+        kong_labels = np.append(kong_labels, labels["kong"], axis=0)
         if state["win"]:
             win_times += 1
             win_steps.append(state["move_count"])
         else:
             none_win_steps.append(state["move_count"])
-    np.save(data_path, discard_data)
-    np.save(labels_path, discard_labels)
+    np.save(data_path + "discard_data.npy", discard_data)
+    np.save(labels_path + "discard_labels.npy", discard_labels)
+    np.save(data_path + "chow_data.npy", chow_data)
+    np.save(labels_path + "chow_labels.npy", chow_labels)
+    np.save(data_path + "pong_data.npy", pong_data)
+    np.save(labels_path + "pong_labels.npy", pong_labels)
+    np.save(data_path + "kong_data.npy", kong_data)
+    np.save(labels_path + "kong_labels.npy", kong_labels)
 
     print(f"{win_times=}")
     print(f"{average(win_steps)=}")
     print(f"{average(none_win_steps)=}")
     print(f"{len(discard_data)=}")
+    print(f"{len(chow_data)=}")
+    print(f"{len(pong_data)=}")
+    print(f"{len(kong_data)=}")
 
 
-def run_agent_in_times(agent: Agent, times=1000):
+def run_agent_in_times(agent: Agent, times=1000, render_mode=None):
     win_times = 0
     win_steps = []
     none_win_steps = []
     for i in range(times):
-        state = run_in_agent(agent)
+        state = run_in_agent(agent, render_mode=render_mode)
         if state["win"]:
             win_times += 1
             win_steps.append(state["move_count"])
@@ -175,14 +209,22 @@ def split_data(data: np.ndarray, labels: np.ndarray, test_rate=0.2, validation_r
     return train_dataset, validation_dataset, test_dataset
 
 
-def get_train_data_info(discard_output_data):
-    ones_indices = np.argmax(discard_output_data, axis=1)
+def get_train_data_info(path):
+    discard_data = load_np_data(path + "discard_labels.npy", (0, 34))
+    chow_data = load_np_data(path + "chow_labels.npy", (0, 2))
+    pong_data = load_np_data(path + "pong_labels.npy", (0, 2))
+    kong_data = load_np_data(path + "kong_labels.npy", (0, 2))
+
+    ones_indices = np.argmax(discard_data, axis=1)
     unique_indices, counts = np.unique(ones_indices, return_counts=True)
 
     all_counts = np.zeros(34, dtype=int)
     all_counts[unique_indices] = counts
     print(all_counts)
-    print(len(discard_output_data))
+    print(f"{len(discard_data)=}")
+    print(f"{len(chow_data)=}")
+    print(f"{len(pong_data)=}")
+    print(f"{len(kong_data)=}")
 
 
 def test_data(data_path, labels_path, model_path, batch_size=32):
@@ -199,11 +241,12 @@ def test_data(data_path, labels_path, model_path, batch_size=32):
 
 
 if __name__ == "__main__":
-    # make_train_data(AlgorithmAgent(), data_path="../data/discard_data1.npy", labels_path="../data/discard_labels1.npy",
-    #                 times=2000)
+    # run_in_agent(AlgorithmAgent(), "human")
+    # make_train_data(AlgorithmAgent(), data_path="../data/data/", labels_path="../data/labels/", times=2000)
+    # get_train_data_info("../data/labels/")
     # train(data_path="../data/discard_data1.npy", labels_path="../data/discard_labels1.npy",
-    #       model_path="../data/discard_model.keras", lr=0.01, epochs=64, batch_size=32)
-    # run_agent_in_times(ModelAgent(discard_path="../data/discard_model.keras"), times=100)
-    # get_train_data_info(load_np_data("../data/discard_output.npy", (0, 34)))
-    test_data(data_path="../data/discard_data1.npy", labels_path="../data/discard_labels1.npy",
-              model_path="../data/discard_model.keras")
+    #       model_path="../data/discard_model.keras", lr=0.01, epochs=128, batch_size=32)
+    # test_data(data_path="../data/discard_data1.npy", labels_path="../data/discard_labels1.npy",
+    #           model_path="../data/discard_model.keras")
+    # run_agent_in_times(ModelAgent(discard_path="../data/discard_model.keras"), times=1)
+    pass

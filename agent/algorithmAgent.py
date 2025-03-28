@@ -1,4 +1,5 @@
 from abc import ABC
+from copy import deepcopy
 from typing import Dict, Any, List, Sequence
 
 import numpy as np
@@ -56,7 +57,25 @@ class AlgorithmAgent(Agent):
     def action(self, agent: str, observation_space: Dict[str, Any], info: Dict[str, Hand | Any], **kwargs):
         if agent == "discard":
             return self.tile_score(info["hand"], info["dark"])
-        return np.array([0, 1], dtype=np.int8)
+        elif agent == "win":
+            return np.array([0, 1], dtype=np.int8)
+        else:
+            min_listen_count = 17
+            for tile in info["hand"]:
+                copy_tiles = deepcopy(info["hand"])
+                copy_tiles.remove(tile)
+                listen_count = Hand(copy_tiles).check_listen_count()
+                if listen_count < min_listen_count:
+                    min_listen_count = listen_count
+            best_listen_count = min_listen_count
+            for tile in info["claimed_hand"]:
+                copy_tiles = deepcopy(info["claimed_hand"])
+                copy_tiles.remove(tile)
+                listen_count = Hand(copy_tiles).check_listen_count()
+                if listen_count < min_listen_count:
+                    min_listen_count = listen_count
+            index = 0 if best_listen_count <= min_listen_count else 1
+            return np.eye(2, dtype=np.int8)[index]
 
     def tile_score(self, tiles: List[Tile], dark: List[Tile]) -> Sequence[int]:
         parameter = [10, 5, 1]

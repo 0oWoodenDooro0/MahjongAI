@@ -15,7 +15,7 @@ class Game:
         self.over = False
         self.next_step = []
         self.state: Dict[str, Any] = {"move_count": 0, "win": None, "draw": None, "player": None, "action": None,
-                                      "hand": None, "discard": None}
+                                      "hand": None, "hand_count": 0, "discard": None, "declaration": None}
 
     def init_game(self):
         self.deal()
@@ -100,7 +100,7 @@ class Game:
                 self.turn_next()
                 self.state["move_count"] += 1
                 self.state["discard"] = discard_tile
-                if len(self.get_turn_player().hand.tiles) not in [1, 4, 7, 10, 13, 16]:
+                if len(player.hand.tiles) not in [1, 4, 7, 10, 13, 16]:
                     raise Exception("not right hand tiles")
             case Action.CHOW:
                 if action == 0 and self.next_step:
@@ -128,32 +128,34 @@ class Game:
                     self.next_step = [{"discard": {"player": self.turn, "tile": None, "type": Action.DISCARD}}]
                     self.state["move_count"] += 1
             case Action.CLOSEDKONG:
-                if action == 0 and self.next_step:
+                if action == 0:
                     self.next_step.pop(0)
                 else:
                     player.closed_kong(next_action["tile"])
                     player.draw(self.board.wall.pop(0))
-                    self.next_step = [{"discard": {"player": self.turn, "tile": None, "type": Action.DISCARD}}]
                     self.state["move_count"] += 1
+                self.next_step = [{"discard": {"player": self.turn, "tile": None, "type": Action.DISCARD}}]
             case Action.ADDKONG:
-                if action == 0 and self.next_step:
+                if action == 0:
                     self.next_step.pop(0)
                 else:
-                    player.add_kong(next_action["tile"])
-                    player.draw(self.board.wall.pop(0))
-                    self.next_step = [{"discard": {"player": self.turn, "tile": None, "type": Action.DISCARD}}]
+                    player.add_kong(next_action["tile"].tiles[0])
+                    kong_draw = self.board.wall.pop(0)
+                    player.draw(kong_draw)
+                    self.state["draw"] = kong_draw
                     self.state["move_count"] += 1
+                self.next_step = [{"discard": {"player": self.turn, "tile": None, "type": Action.DISCARD}}]
             case Action.WIN:
                 if action == 0 and self.next_step:
                     self.next_step.pop(0)
                 else:
-                    if len(self.get_turn_player().hand.tiles) in [1, 4, 7, 10, 13, 16]:
-                        self.get_turn_player().draw(self.get_discard_tile())
+                    if len(player.hand.tiles) in [1, 4, 7, 10, 13, 16]:
+                        player.draw(self.get_discard_tile())
                     self.win()
                     self.state["move_count"] += 1
                     self.state["win"] = True
-                    if len(self.get_turn_player().hand.tiles) not in [2, 5, 8, 11, 14, 17]:
-                        print(sorted(self.get_turn_player().hand.tiles))
+                    if len(player.hand.tiles) not in [2, 5, 8, 11, 14, 17]:
+                        print(sorted(player.hand.tiles))
                         raise Exception("not right hand tiles")
 
         if not self.next_step:
@@ -165,4 +167,6 @@ class Game:
             self.get_turn_player().draw(draw_tile)
             self.next_step = self.check_draw_next_step()
 
-        self.state["hand"] = sorted(copy.deepcopy(self.get_turn_player().hand.tiles))
+        self.state["hand"] = sorted(copy.deepcopy(player.hand.tiles))
+        self.state["hand_count"] = len(player.hand.tiles)
+        self.state["declaration"] = player.declaration.melds

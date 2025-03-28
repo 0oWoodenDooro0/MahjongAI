@@ -93,12 +93,13 @@ class Player:
                 return QuadrupletMeld((kong_tile, kong_tile, kong_tile, kong_tile))
         return None
 
-    def can_add_kong(self) -> Optional[List[Tile]]:
+    def can_add_kong(self) -> Optional[List[QuadrupletMeld]]:
         kong_list = []
         for meld in self.declaration:
-            for tile in set(self.hand):
-                if TripletMeld.is_valid(meld.tiles):
-                    kong_list.append(tile)
+            if isinstance(meld, TripletMeld):
+                tile = meld.tiles[0]
+                if tile in set(self.hand):
+                    kong_list.append(QuadrupletMeld((tile, tile, tile, tile)))
         if kong_list:
             return kong_list
         return None

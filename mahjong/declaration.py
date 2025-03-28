@@ -16,8 +16,10 @@ class Declaration:
 
     def add_kong(self, tile: Tile):
         for index in range(len(self.melds)):
-            if TripletMeld.is_valid(self.melds[index].tiles):
-                self.melds[index] = QuadrupletMeld((tile, tile, tile, tile))
+            if isinstance(self.melds[index], TripletMeld):
+                if self.melds[index].tiles[0] == tile:
+                    self.melds[index] = QuadrupletMeld((tile, tile, tile, tile))
+                    return
 
     def observation(self):
         tiles = []

@@ -33,10 +33,10 @@ class MahjongParallelEnv(ParallelEnv):
     def observation_space(self, agent):
         observation_spaces = {
             "discard": MultiDiscrete([20, 34]),
-            "chow": MultiDiscrete([20, 34]),
-            "pong": MultiDiscrete([20, 34]),
-            "kong": MultiDiscrete([20, 34]),
-            "win": MultiDiscrete([20, 34]),
+            "chow": MultiDiscrete([8, 34]),
+            "pong": MultiDiscrete([8, 34]),
+            "kong": MultiDiscrete([8, 34]),
+            "win": MultiDiscrete([4, 34]),
         }
         return observation_spaces[agent]
 
@@ -110,14 +110,24 @@ class MahjongParallelEnv(ParallelEnv):
         next_action = next_step[agent]
         action_type = next_action["type"]
         self_player = self.game.players[next_action["player"]]
-        observation = self_player.hand.observation()
-        for player in self.game.players:
-            if player.turn == self_player.turn:
-                continue
-            observation = np.concatenate((observation, player.declaration.observation()))
-        observation = np.concatenate((observation, self.game.board.river_observation()))
-        observations = {agent: {"observation": observation,
-                                "action_mask": self_player.hand.mask() if action_type == Action.DISCARD else None}}
+        if agent == "discard":
+            observation = self_player.hand.observation()
+            for player in self.game.players:
+                if player.turn == self_player.turn:
+                    continue
+                observation = np.concatenate((observation, player.declaration.observation()))
+            observation = np.concatenate((observation, self.game.board.river_observation()))
+            observations = {agent: {"observation": observation,
+                                    "action_mask": self_player.hand.mask() if action_type == Action.DISCARD else None}}
+        elif agent == "win":
+            observation = self_player.hand.observation()
+            observations = {agent: {"observation": observation,
+                                    "action_mask": [1, 1]}}
+        else:
+            observation = self_player.hand.observation()
+            observation = np.concatenate((observation, self_player.hand.claim_observation(next_action["tile"])))
+            observations = {agent: {"observation": observation,
+                                    "action_mask": [1, 1]}}
         return observations
 
     def _get_reward(self, agent: str) -> Dict[str, Any]:
@@ -131,15 +141,27 @@ class MahjongParallelEnv(ParallelEnv):
         next_step = self.game.next_step[0]
         next_action = next_step[agent]
         self_player = self.game.players[next_action["player"]]
-        dark_tiles = copy.deepcopy(self.game.board.wall)
-        for player in self.game.players:
-            if player.turn == self_player.turn:
-                continue
-            dark_tiles.extend(copy.deepcopy(player.hand.tiles))
-        return {agent: {
-            "hand": sorted(copy.deepcopy(self_player.hand.tiles)),
-            "dark": dark_tiles,
-        }}
+        if agent == "discard":
+            dark_tiles = copy.deepcopy(self.game.board.wall)
+            for player in self.game.players:
+                if player.turn == self_player.turn:
+                    continue
+                dark_tiles.extend(copy.deepcopy(player.hand.tiles))
+            return {agent: {
+                "hand": sorted(copy.deepcopy(self_player.hand.tiles)),
+                "dark": dark_tiles,
+            }}
+        elif agent == "win":
+            return {agent: {}}
+        else:
+            claimed_hand = copy.deepcopy(self_player.hand.tiles)
+            for tile in next_action["tile"]:
+                if tile in claimed_hand:
+                    claimed_hand.remove(tile)
+            return {agent: {
+                "hand": sorted(copy.deepcopy(self_player.hand.tiles)),
+                "claimed_hand": sorted(claimed_hand)
+            }}
 
     def _get_termination(self, agent: str) -> Dict[str, Any]:
         return {agent: self.game.over}
